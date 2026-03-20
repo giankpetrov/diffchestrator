@@ -127,6 +127,12 @@
         "icon": "$(cloud-upload)"
       },
       {
+        "command": "diffchestrator.pull",
+        "title": "Pull",
+        "category": "Diffchestrator",
+        "icon": "$(cloud-download)"
+      },
+      {
         "command": "diffchestrator.aiCommit",
         "title": "AI Commit (Claude)",
         "category": "Diffchestrator",
@@ -188,6 +194,42 @@
         "command": "diffchestrator.clearSelection",
         "title": "Clear Selection",
         "category": "Diffchestrator"
+      },
+      {
+        "command": "diffchestrator.commitHistory",
+        "title": "Commit History",
+        "category": "Diffchestrator",
+        "icon": "$(history)"
+      },
+      {
+        "command": "diffchestrator.discardFile",
+        "title": "Discard Changes",
+        "category": "Diffchestrator",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "diffchestrator.discardAll",
+        "title": "Discard All Changes",
+        "category": "Diffchestrator",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "diffchestrator.switchBranch",
+        "title": "Switch Branch",
+        "category": "Diffchestrator",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "diffchestrator.stash",
+        "title": "Stash Management",
+        "category": "Diffchestrator",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "diffchestrator.toggleBlame",
+        "title": "Toggle Inline Blame",
+        "category": "Diffchestrator",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
@@ -216,6 +258,11 @@
           "command": "diffchestrator.unstageAll",
           "when": "view == diffchestrator.changedFiles && diffchestrator.hasSelectedRepo",
           "group": "navigation@2"
+        },
+        {
+          "command": "diffchestrator.discardAll",
+          "when": "view == diffchestrator.changedFiles && diffchestrator.hasSelectedRepo",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -235,14 +282,34 @@
           "group": "1_actions@1"
         },
         {
-          "command": "diffchestrator.aiCommit",
+          "command": "diffchestrator.pull",
           "when": "viewItem == repo",
           "group": "1_actions@2"
         },
         {
-          "command": "diffchestrator.browseFiles",
+          "command": "diffchestrator.aiCommit",
+          "when": "viewItem == repo",
+          "group": "1_actions@3"
+        },
+        {
+          "command": "diffchestrator.commitHistory",
+          "when": "viewItem == repo",
+          "group": "1_actions@4"
+        },
+        {
+          "command": "diffchestrator.switchBranch",
           "when": "viewItem == repo",
           "group": "1_actions@5"
+        },
+        {
+          "command": "diffchestrator.stash",
+          "when": "viewItem == repo",
+          "group": "1_actions@6"
+        },
+        {
+          "command": "diffchestrator.browseFiles",
+          "when": "viewItem == repo",
+          "group": "1_actions@7"
         },
         {
           "command": "diffchestrator.openTerminal",
@@ -278,6 +345,16 @@
           "command": "diffchestrator.unstageFile",
           "when": "viewItem == file-staged",
           "group": "inline@1"
+        },
+        {
+          "command": "diffchestrator.discardFile",
+          "when": "viewItem == file-unstaged",
+          "group": "inline@2"
+        },
+        {
+          "command": "diffchestrator.discardFile",
+          "when": "viewItem == file-unstaged",
+          "group": "1_file@1"
         }
       ]
     },
@@ -287,10 +364,15 @@
       { "command": "diffchestrator.browseFiles", "key": "ctrl+d f", "mac": "cmd+d f" },
       { "command": "diffchestrator.aiCommit", "key": "ctrl+d c", "mac": "cmd+d c" },
       { "command": "diffchestrator.push", "key": "ctrl+d p", "mac": "cmd+d p" },
+      { "command": "diffchestrator.pull", "key": "ctrl+d u", "mac": "cmd+d u" },
       { "command": "diffchestrator.openTerminal", "key": "ctrl+d t", "mac": "cmd+d t" },
       { "command": "diffchestrator.openClaudeCode", "key": "ctrl+d l", "mac": "cmd+d l" },
       { "command": "diffchestrator.yolo", "key": "ctrl+d y", "mac": "cmd+d y" },
-      { "command": "diffchestrator.toggleChangedOnly", "key": "ctrl+d d", "mac": "cmd+d d" }
+      { "command": "diffchestrator.toggleChangedOnly", "key": "ctrl+d d", "mac": "cmd+d d" },
+      { "command": "diffchestrator.commitHistory", "key": "ctrl+d h", "mac": "cmd+d h" },
+      { "command": "diffchestrator.switchBranch", "key": "ctrl+d b", "mac": "cmd+d b" },
+      { "command": "diffchestrator.stash", "key": "ctrl+d a", "mac": "cmd+d a" },
+      { "command": "diffchestrator.toggleBlame", "key": "ctrl+d g", "mac": "cmd+d g" }
     ],
     "configuration": {
       "title": "Diffchestrator",
@@ -348,6 +430,11 @@
           },
           "default": [],
           "description": "Additional directory names to skip during scanning"
+        },
+        "diffchestrator.showInlineBlame": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline git blame annotation on the current line"
         }
       }
     }

@@ -8,15 +8,22 @@ import { registerScanCommands } from "./commands/scan";
 import { registerStageCommands } from "./commands/stage";
 import { registerCommitCommands } from "./commands/commit";
 import { registerPushCommands } from "./commands/push";
+import { registerPullCommands } from "./commands/pull";
 import { registerAiCommitCommands } from "./commands/aiCommit";
 import { registerClaudeCommands } from "./commands/openClaude";
 import { registerFavoriteCommands } from "./commands/favorites";
 import { registerFileSearchCommand } from "./commands/fileSearch";
 import { registerTerminalCommand } from "./commands/terminal";
+import { registerCommitHistoryCommands } from "./commands/commitHistory";
+import { registerDiscardCommands } from "./commands/discard";
+import { registerSwitchBranchCommands } from "./commands/switchBranch";
+import { registerStashCommands } from "./commands/stash";
 import { GitContentProvider } from "./providers/gitContentProvider";
 import { DiffWebviewPanel } from "./views/diffWebviewPanel";
 import { FileWatcher } from "./services/fileWatcher";
 import { StatusBarManager } from "./services/statusBar";
+import { InlineBlameService } from "./services/inlineBlame";
+import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 
 export function activate(context: vscode.ExtensionContext): void {
   const repoManager = new RepoManager();
@@ -77,11 +84,16 @@ export function activate(context: vscode.ExtensionContext): void {
   registerStageCommands(context, repoManager);
   registerCommitCommands(context, repoManager);
   registerPushCommands(context, repoManager);
+  registerPullCommands(context, repoManager);
   registerAiCommitCommands(context, repoManager);
   registerClaudeCommands(context, repoManager);
   registerFavoriteCommands(context, repoManager);
   registerFileSearchCommand(context, repoManager);
   registerTerminalCommand(context, repoManager);
+  registerCommitHistoryCommands(context, repoManager);
+  registerDiscardCommands(context, repoManager);
+  registerSwitchBranchCommands(context, repoManager);
+  registerStashCommands(context, repoManager);
 
   // Toggle changed only
   context.subscriptions.push(
@@ -151,6 +163,14 @@ export function activate(context: vscode.ExtensionContext): void {
   // Phase 6: Status bar — shows repo/change counts
   const statusBar = new StatusBarManager(repoManager);
   context.subscriptions.push(statusBar);
+
+  // Phase 7: Inline blame — git blame on current line
+  const inlineBlame = new InlineBlameService(repoManager);
+  context.subscriptions.push(inlineBlame);
+
+  // Phase 8: Auto-scan workspace folders
+  const workspaceAutoScan = new WorkspaceAutoScan(repoManager, fileWatcher);
+  context.subscriptions.push(workspaceAutoScan);
 
   // Auto-scan on startup
   const config = vscode.workspace.getConfiguration("diffchestrator");

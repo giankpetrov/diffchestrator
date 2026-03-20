@@ -293,6 +293,142 @@ export class GitExecutor {
     return result.stdout;
   }
 
+  async pull(repoPath: string): Promise<string> {
+    const result = await this._run(["pull"], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Pull failed");
+    }
+    return result.stdout || result.stderr;
+  }
+
+  async branches(repoPath: string): Promise<{ name: string; current: boolean }[]> {
+    const result = await this._run(["branch", "--list", "--no-color"], repoPath);
+    if (!result.stdout.trim()) return [];
+    return result.stdout.split("\n").filter(l => l.trim()).map(line => ({
+      name: line.replace(/^\*?\s+/, "").trim(),
+      current: line.startsWith("*"),
+    }));
+  }
+
+  async checkout(repoPath: string, branch: string): Promise<string> {
+    const result = await this._run(["checkout", branch], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Checkout failed");
+    }
+    return result.stdout || result.stderr;
+  }
+
+  async createBranch(repoPath: string, branch: string): Promise<string> {
+    const result = await this._run(["checkout", "-b", branch], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Branch creation failed");
+    }
+    return result.stdout || result.stderr;
+  }
+
+  async checkoutFile(repoPath: string, file: string): Promise<void> {
+    this._validateFilePath(repoPath, file);
+    const result = await this._run(["checkout", "--", file], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Discard failed");
+    }
+  }
+
+  async checkoutAll(repoPath: string): Promise<void> {
+    const result = await this._run(["checkout", "--", "."], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Discard all failed");
+    }
+  }
+
+  async clean(repoPath: string): Promise<string> {
+    const result = await this._run(["clean", "-fd"], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Clean failed");
+    }
+    return result.stdout;
+  }
+
+  async stashList(repoPath: string): Promise<{ index: number; message: string }[]> {
+    const result = await this._run(["stash", "list"], repoPath);
+    if (!result.stdout.trim()) return [];
+    return result.stdout.split("\n").filter(l => l.trim()).map((line, i) => ({
+      index: i,
+      message: line,
+    }));
+  }
+
+  async stashPush(repoPath: string, message?: string): Promise<string> {
+    const args = ["stash", "push"];
+    if (message) {
+      args.push("-m", message);
+    }
+    const result = await this._run(args, repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Stash push failed");
+    }
+    return result.stdout || result.stderr;
+  }
+
+  async stashPop(repoPath: string): Promise<string> {
+    const result = await this._run(["stash", "pop"], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Stash pop failed");
+    }
+    return result.stdout || result.stderr;
+  }
+
+  async stashApply(repoPath: string, index: number): Promise<string> {
+    const result = await this._run(["stash", "apply", `stash@{${index}}`], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Stash apply failed");
+    }
+    return result.stdout || result.stderr;
+  }
+
+  async stashShow(repoPath: string, index: number): Promise<string> {
+    const result = await this._run(["stash", "show", "-p", `stash@{${index}}`], repoPath);
+    return result.stdout;
+  }
+
+  async blame(repoPath: string, file: string, line: number): Promise<{
+    hash: string;
+    author: string;
+    date: string;
+    summary: string;
+  } | undefined> {
+    this._validateFilePath(repoPath, file);
+    const result = await this._run(
+      ["blame", "-L", `${line},${line}`, "--porcelain", file],
+      repoPath
+    );
+    if (result.code !== 0 || !result.stdout.trim()) {
+      return undefined;
+    }
+
+    const lines = result.stdout.split("\n");
+    let hash = "";
+    let author = "";
+    let date = "";
+    let summary = "";
+
+    for (const l of lines) {
+      if (!hash && l.match(/^[0-9a-f]{40}/)) {
+        hash = l.split(" ")[0];
+      } else if (l.startsWith("author ")) {
+        author = l.slice("author ".length);
+      } else if (l.startsWith("author-time ")) {
+        const ts = parseInt(l.slice("author-time ".length), 10);
+        date = new Date(ts * 1000).toISOString();
+      } else if (l.startsWith("summary ")) {
+        summary = l.slice("summary ".length);
+      }
+    }
+
+    if (!hash) return undefined;
+    return { hash, author, date, summary };
+  }
+
   async listFiles(repoPath: string, query?: string): Promise<string[]> {
     const result = await this._run(
       ["ls-files", "--cached", "--others", "--exclude-standard"],

@@ -1,0 +1,94 @@
+import * as vscode from "vscode";
+import * as path from "path";
+import { GitExecutor } from "../git/gitExecutor";
+import type { RepoManager } from "../services/repoManager";
+import { CMD } from "../constants";
+
+function resolveFileItem(item: any): { repoPath: string; filePath: string } | undefined {
+  const repoPath = item?.repoPath;
+  const filePath = item?.fileChange?.path ?? item?.filePath;
+  if (repoPath && filePath) return { repoPath, filePath };
+  return undefined;
+}
+
+export function registerDiscardCommands(
+  context: vscode.ExtensionContext,
+  repoManager: RepoManager
+): void {
+  const git = new GitExecutor();
+
+  // Discard single file
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      CMD.discardFile,
+      async (item?: any) => {
+        const resolved = resolveFileItem(item);
+        if (!resolved) {
+          vscode.window.showWarningMessage("Diffchestrator: No file selected.");
+          return;
+        }
+
+        const fileName = path.basename(resolved.filePath);
+        const confirm = await vscode.window.showWarningMessage(
+          `Discard changes to "${fileName}"? This cannot be undone.`,
+          { modal: true },
+          "Yes"
+        );
+
+        if (confirm !== "Yes") return;
+
+        try {
+          await git.checkoutFile(resolved.repoPath, resolved.filePath);
+          await repoManager.refreshRepo(resolved.repoPath);
+          vscode.window.showInformationMessage(
+            `Diffchestrator: Discarded changes to ${fileName}`
+          );
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(
+            `Diffchestrator: Failed to discard: ${msg}`
+          );
+        }
+      }
+    )
+  );
+
+  // Discard all changes
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      CMD.discardAll,
+      async () => {
+        const repoPath = repoManager.selectedRepo;
+        if (!repoPath) {
+          vscode.window.showWarningMessage(
+            "Diffchestrator: No repository selected."
+          );
+          return;
+        }
+
+        const repoName = path.basename(repoPath);
+        const confirm = await vscode.window.showWarningMessage(
+          `Discard ALL changes in "${repoName}"? This will revert modified files and remove untracked files. This cannot be undone.`,
+          { modal: true },
+          "Yes"
+        );
+
+        if (confirm !== "Yes") return;
+
+        try {
+          await git.checkoutAll(repoPath);
+          await git.clean(repoPath);
+          await repoManager.refreshRepo(repoPath);
+          vscode.window.showInformationMessage(
+            `Diffchestrator: Discarded all changes in ${repoName}`
+          );
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(
+            `Diffchestrator: Failed to discard all: ${msg}`
+          );
+        }
+      }
+    )
+  );
+}

@@ -17,6 +17,7 @@ export const CMD = {
   unstageAll: "diffchestrator.unstageAll",
   commit: "diffchestrator.commit",
   push: "diffchestrator.push",
+  pull: "diffchestrator.pull",
   aiCommit: "diffchestrator.aiCommit",
   bulkCommit: "diffchestrator.bulkCommit",
   bulkPush: "diffchestrator.bulkPush",
@@ -28,6 +29,12 @@ export const CMD = {
   clearSelection: "diffchestrator.clearSelection",
   switchRepo: "diffchestrator.switchRepo",
   yolo: "diffchestrator.yolo",
+  commitHistory: "diffchestrator.commitHistory",
+  discardFile: "diffchestrator.discardFile",
+  discardAll: "diffchestrator.discardAll",
+  switchBranch: "diffchestrator.switchBranch",
+  stash: "diffchestrator.stash",
+  toggleBlame: "diffchestrator.toggleBlame",
 } as const;
 
 export const CONFIG = {
@@ -39,6 +46,7 @@ export const CONFIG = {
   autoRefreshInterval: "diffchestrator.autoRefreshInterval",
   favorites: "diffchestrator.favorites",
   claudePermissionMode: "diffchestrator.claudePermissionMode",
+  showInlineBlame: "diffchestrator.showInlineBlame",
 } as const;
 
 export const CTX = {

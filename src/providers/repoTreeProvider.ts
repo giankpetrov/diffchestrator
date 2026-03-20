@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import { GitExecutor } from "../git/gitExecutor";
 import type { RepoManager } from "../services/repoManager";
 import type { RepoSummary } from "../types";
 import { CMD } from "../constants";
@@ -17,12 +18,31 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private _root: TreeNode | undefined;
+  private _git = new GitExecutor();
+  private _lastCommitCache = new Map<string, { message: string; date: string }>();
 
   constructor(private repoManager: RepoManager) {
     repoManager.onDidChangeRepos(() => {
       this._root = undefined;
+      this._refreshLastCommits();
       this._onDidChangeTreeData.fire();
     });
+  }
+
+  private async _refreshLastCommits(): Promise<void> {
+    for (const repo of this.repoManager.repos) {
+      try {
+        const commits = await this._git.log(repo.path, 1);
+        if (commits.length > 0) {
+          this._lastCommitCache.set(repo.path, {
+            message: commits[0].message,
+            date: commits[0].date,
+          });
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 
   getTreeItem(element: TreeNode): vscode.TreeItem {
@@ -196,6 +216,32 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (r.unstagedCount > 0) lines.push(`Unstaged: ${r.unstagedCount}`);
     if (r.untrackedCount > 0) lines.push(`Untracked: ${r.untrackedCount}`);
     if (r.remoteUrl) lines.push(`Remote: ${r.remoteUrl}`);
+
+    const lastCommit = this._lastCommitCache.get(r.path);
+    if (lastCommit) {
+      const relDate = this._timeAgo(lastCommit.date);
+      lines.push(`Last commit: ${lastCommit.message} (${relDate})`);
+    }
+
     return lines.join("\n");
+  }
+
+  private _timeAgo(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = Date.now();
+    const diffMs = now - date.getTime();
+    const seconds = Math.floor(diffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30);
+
+    if (months > 0) return `${months} month${months > 1 ? "s" : ""} ago`;
+    if (weeks > 0) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+    return "just now";
   }
 }

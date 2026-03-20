@@ -13,11 +13,16 @@ export class GitContentProvider implements vscode.TextDocumentContentProvider {
   async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
     try {
       const params = JSON.parse(uri.query);
-      const { path: filePath, ref, repoPath } = params;
+      const { path: filePath, ref, repoPath, fullShow } = params;
 
       if (!ref) {
         // Empty ref = empty content (for new files being staged)
         return "";
+      }
+
+      // Full show mode: git show <ref> (used for commit history)
+      if (fullShow) {
+        return await this._git.show(repoPath, ref);
       }
 
       // git show REF:path
