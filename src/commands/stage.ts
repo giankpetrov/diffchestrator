@@ -3,6 +3,18 @@ import { GitExecutor } from "../git/gitExecutor";
 import type { RepoManager } from "../services/repoManager";
 import { CMD } from "../constants";
 
+/**
+ * Extract repoPath and filePath from various argument shapes:
+ * - FileNode from tree: { type: "file", repoPath: "...", fileChange: { path: "..." } }
+ * - TreeItem with attached props: { repoPath: "...", filePath: "..." }
+ */
+function resolveFileItem(item: any): { repoPath: string; filePath: string } | undefined {
+  const repoPath = item?.repoPath;
+  const filePath = item?.fileChange?.path ?? item?.filePath;
+  if (repoPath && filePath) return { repoPath, filePath };
+  return undefined;
+}
+
 export function registerStageCommands(
   context: vscode.ExtensionContext,
   repoManager: RepoManager
@@ -12,14 +24,15 @@ export function registerStageCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(
       CMD.stageFile,
-      async (item?: { repoPath?: string; filePath?: string }) => {
-        if (!item?.repoPath || !item?.filePath) {
+      async (item?: any) => {
+        const resolved = resolveFileItem(item);
+        if (!resolved) {
           vscode.window.showWarningMessage("Diffchestrator: No file selected.");
           return;
         }
         try {
-          await git.stage(item.repoPath, [item.filePath]);
-          await repoManager.refreshRepo(item.repoPath);
+          await git.stage(resolved.repoPath, [resolved.filePath]);
+          await repoManager.refreshRepo(resolved.repoPath);
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);
           vscode.window.showErrorMessage(`Diffchestrator: Failed to stage file: ${msg}`);
@@ -31,14 +44,15 @@ export function registerStageCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand(
       CMD.unstageFile,
-      async (item?: { repoPath?: string; filePath?: string }) => {
-        if (!item?.repoPath || !item?.filePath) {
+      async (item?: any) => {
+        const resolved = resolveFileItem(item);
+        if (!resolved) {
           vscode.window.showWarningMessage("Diffchestrator: No file selected.");
           return;
         }
         try {
-          await git.unstage(item.repoPath, [item.filePath]);
-          await repoManager.refreshRepo(item.repoPath);
+          await git.unstage(resolved.repoPath, [resolved.filePath]);
+          await repoManager.refreshRepo(resolved.repoPath);
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);
           vscode.window.showErrorMessage(`Diffchestrator: Failed to unstage file: ${msg}`);
@@ -51,9 +65,7 @@ export function registerStageCommands(
     vscode.commands.registerCommand(CMD.stageAll, async () => {
       const repoPath = repoManager.selectedRepo;
       if (!repoPath) {
-        vscode.window.showWarningMessage(
-          "Diffchestrator: No repository selected."
-        );
+        vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
         return;
       }
       try {
@@ -82,9 +94,7 @@ export function registerStageCommands(
     vscode.commands.registerCommand(CMD.unstageAll, async () => {
       const repoPath = repoManager.selectedRepo;
       if (!repoPath) {
-        vscode.window.showWarningMessage(
-          "Diffchestrator: No repository selected."
-        );
+        vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
         return;
       }
       try {
