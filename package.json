@@ -279,20 +279,17 @@
       {
         "command": "diffchestrator.browseFiles",
         "key": "ctrl+shift+o",
-        "mac": "cmd+shift+o",
-        "when": "diffchestrator.hasSelectedRepo"
+        "mac": "cmd+shift+o"
       },
       {
         "command": "diffchestrator.switchRepo",
         "key": "ctrl+shift+r",
-        "mac": "cmd+shift+r",
-        "when": "diffchestrator.hasRepos"
+        "mac": "cmd+shift+r"
       },
       {
         "command": "diffchestrator.aiCommit",
         "key": "ctrl+alt+c",
-        "mac": "cmd+alt+c",
-        "when": "diffchestrator.hasSelectedRepo"
+        "mac": "cmd+alt+c"
       }
     ],
     "configuration": {
