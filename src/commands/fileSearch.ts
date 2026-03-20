@@ -135,4 +135,46 @@ export function registerFileSearchCommand(
       quickPick.show();
     })
   );
+
+  // Switch repo — QuickPick to select a repo and make it active
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.switchRepo, async () => {
+      const repos = repoManager.repos;
+      if (repos.length === 0) {
+        vscode.window.showWarningMessage("Diffchestrator: No repos scanned.");
+        return;
+      }
+
+      const currentPath = repoManager.selectedRepo;
+
+      const items = repos.map((r) => ({
+        label: `$(repo) ${r.name}`,
+        description: r.branch + (r.totalChanges > 0 ? ` — ${r.totalChanges} changes` : ""),
+        detail: r.path,
+        _repoPath: r.path,
+        picked: r.path === currentPath,
+      }));
+
+      // Sort: current repo first, then repos with changes, then alphabetical
+      items.sort((a, b) => {
+        if (a._repoPath === currentPath) return -1;
+        if (b._repoPath === currentPath) return 1;
+        const aChanges = repos.find((r) => r.path === a._repoPath)?.totalChanges ?? 0;
+        const bChanges = repos.find((r) => r.path === b._repoPath)?.totalChanges ?? 0;
+        if (aChanges !== bChanges) return bChanges - aChanges;
+        return a.label.localeCompare(b.label);
+      });
+
+      const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: "Switch to a repository...",
+        matchOnDescription: true,
+        matchOnDetail: true,
+      });
+
+      if (selected) {
+        repoManager.selectRepo(selected._repoPath);
+        await vscode.commands.executeCommand("diffchestrator.changedFiles.focus");
+      }
+    })
+  );
 }

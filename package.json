@@ -156,9 +156,15 @@
       },
       {
         "command": "diffchestrator.browseFiles",
-        "title": "Browse Files",
+        "title": "Browse Files in Repo",
         "category": "Diffchestrator",
         "icon": "$(file-directory)"
+      },
+      {
+        "command": "diffchestrator.switchRepo",
+        "title": "Switch Repo",
+        "category": "Diffchestrator",
+        "icon": "$(repo)"
       },
       {
         "command": "diffchestrator.openTerminal",
@@ -269,6 +275,18 @@
         "command": "diffchestrator.scan",
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d"
+      },
+      {
+        "command": "diffchestrator.browseFiles",
+        "key": "ctrl+shift+o",
+        "mac": "cmd+shift+o",
+        "when": "diffchestrator.hasSelectedRepo"
+      },
+      {
+        "command": "diffchestrator.switchRepo",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "diffchestrator.hasRepos"
       }
     ],
     "configuration": {

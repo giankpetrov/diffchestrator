@@ -26,6 +26,7 @@ export const CMD = {
   openTerminal: "diffchestrator.openTerminal",
   selectRepo: "diffchestrator.selectRepo",
   clearSelection: "diffchestrator.clearSelection",
+  switchRepo: "diffchestrator.switchRepo",
 } as const;
 
 export const CONFIG = {
