@@ -26,9 +26,11 @@ export class StatusBarManager implements vscode.Disposable {
       99
     );
     this._activeItem.command = CMD.switchRepo;
-    this._activeItem.show();
+    this._activeItem.backgroundColor = new vscode.ThemeColor("statusBarItem.prominentBackground");
+    // Don't show until a repo is selected
+    this._activeItem.hide();
 
-    this.showScanning();
+    this._refreshSummary();
 
     this._repoManager.onDidChangeRepos(
       () => this._refresh(),
@@ -45,25 +47,32 @@ export class StatusBarManager implements vscode.Disposable {
   showScanning(): void {
     this._repoItem.text = "$(loading~spin) Scanning...";
     this._repoItem.tooltip = "Diffchestrator: Scanning for repositories...";
-    this._activeItem.text = "";
   }
 
-  private _refresh(): void {
+  private _refreshSummary(): void {
     const repos = this._repoManager.repos;
     const repoCount = repos.length;
     const changeCount = repos.reduce((sum, r) => sum + r.totalChanges, 0);
 
-    this._repoItem.text = `$(git-branch) ${repoCount} repo${repoCount !== 1 ? "s" : ""}${changeCount > 0 ? `, ${changeCount} changes` : ""}`;
-    this._repoItem.tooltip = `Diffchestrator: ${repoCount} repositories, ${changeCount} total changes\nClick to open sidebar`;
+    if (repoCount === 0) {
+      this._repoItem.text = "$(git-branch) Diffchestrator";
+      this._repoItem.tooltip = "Click to open Diffchestrator sidebar";
+    } else {
+      this._repoItem.text = `$(git-branch) ${repoCount} repo${repoCount !== 1 ? "s" : ""}${changeCount > 0 ? `, ${changeCount} changes` : ""}`;
+      this._repoItem.tooltip = `Diffchestrator: ${repoCount} repositories, ${changeCount} total changes\nClick to open sidebar`;
+    }
 
     this._refreshActive();
+  }
+
+  private _refresh(): void {
+    this._refreshSummary();
   }
 
   private _refreshActive(): void {
     const selected = this._repoManager.selectedRepo;
     if (!selected) {
-      this._activeItem.text = "";
-      this._activeItem.tooltip = "";
+      this._activeItem.hide();
       return;
     }
 
@@ -72,8 +81,9 @@ export class StatusBarManager implements vscode.Disposable {
     const branch = repo?.branch ?? "";
     const changes = repo?.totalChanges ?? 0;
 
-    this._activeItem.text = `$(repo) ${name}${branch ? ` (${branch})` : ""}${changes > 0 ? ` +${changes}` : ""}`;
-    this._activeItem.tooltip = `Active repo: ${selected}\nBranch: ${branch}\n${changes} changes\nClick to switch repo`;
+    this._activeItem.text = `$(repo) ${name}  $(git-branch) ${branch}${changes > 0 ? `  $(circle-filled) ${changes}` : ""}`;
+    this._activeItem.tooltip = `Active repo: ${name}\nPath: ${selected}\nBranch: ${branch}\n${changes} change${changes !== 1 ? "s" : ""}\n\nClick to switch repo (Ctrl+Shift+R)`;
+    this._activeItem.show();
   }
 
   dispose(): void {
