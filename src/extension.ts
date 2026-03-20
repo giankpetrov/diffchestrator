@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       CMD.viewDiff,
-      (item?: { path?: string }) => {
+      async (item?: { path?: string }) => {
         const repoPath = item?.path ?? repoManager.selectedRepo;
         if (!repoPath) {
           vscode.window.showWarningMessage(
@@ -86,6 +86,8 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
         repoManager.selectRepo(repoPath);
+        // Reveal the changed files view so the user sees it
+        await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
       }
     )
   );

@@ -42,6 +42,18 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "diffchestrator.repos",
+        "contents": "No repositories found.\n[Scan Directory](command:diffchestrator.scan)",
+        "when": "!diffchestrator.hasRepos"
+      },
+      {
+        "view": "diffchestrator.changedFiles",
+        "contents": "Click a repository to see its changed files.",
+        "when": "!diffchestrator.hasSelectedRepo"
+      }
+    ],
     "commands": [
       {
         "command": "diffchestrator.scan",
