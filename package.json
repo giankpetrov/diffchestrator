@@ -287,6 +287,12 @@
         "key": "ctrl+shift+r",
         "mac": "cmd+shift+r",
         "when": "diffchestrator.hasRepos"
+      },
+      {
+        "command": "diffchestrator.aiCommit",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "diffchestrator.hasSelectedRepo"
       }
     ],
     "configuration": {

@@ -78,7 +78,13 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   private _buildTree(): TreeNode | undefined {
     if (this._root) return this._root;
 
-    let repos = this.repoManager.repos;
+    let repos = [...this.repoManager.repos];
+    // Sort: repos with changes first, then alphabetical
+    repos.sort((a, b) => {
+      if (a.totalChanges > 0 && b.totalChanges === 0) return -1;
+      if (a.totalChanges === 0 && b.totalChanges > 0) return 1;
+      return a.name.localeCompare(b.name);
+    });
     if (this.repoManager.changedOnly) {
       repos = repos.filter((r) => r.totalChanges > 0);
     }

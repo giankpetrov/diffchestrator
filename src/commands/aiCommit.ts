@@ -26,19 +26,8 @@ export function registerAiCommitCommands(
         const config = vscode.workspace.getConfiguration("diffchestrator");
         const permissionMode = config.get<string>("claudePermissionMode", "acceptEdits");
 
-        let permFlag: string;
-        switch (permissionMode) {
-          case "full":
-            permFlag = "full";
-            break;
-          case "default":
-            permFlag = "default";
-            break;
-          case "acceptEdits":
-          default:
-            permFlag = "accept-edits";
-            break;
-        }
+        // Pass through directly — Claude CLI expects exact values: acceptEdits, bypassPermissions, default, dontAsk, plan, auto
+        const permFlag = permissionMode;
 
         const prompt =
           "Review the current git diff (staged and unstaged). Write a clear, conventional " +
