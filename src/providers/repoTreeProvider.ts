@@ -27,6 +27,10 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       this._refreshLastCommits();
       this._onDidChangeTreeData.fire();
     });
+    repoManager.onDidChangeSelection(() => {
+      // Re-render tree to update active/selected highlights
+      this._onDidChangeTreeData.fire();
+    });
   }
 
   private async _refreshLastCommits(): Promise<void> {
@@ -55,16 +59,25 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     if (element.isRepo && element.repo) {
       const r = element.repo;
+      const isActive = r.path === this.repoManager.selectedRepo;
+      const isMultiSelected = this.repoManager.selectedRepoPaths.has(r.path);
+
       const parts: string[] = [];
+      if (isActive) parts.push("● active");
+      if (isMultiSelected) parts.push("✓ selected");
       if (r.branch) parts.push(r.branch);
       if (r.totalChanges > 0) parts.push(`${r.totalChanges} changes`);
-      item.description = parts.join(" | ");
+      item.description = parts.join(" · ");
       item.contextValue = "repo";
       (item as vscode.TreeItem & { path: string }).path = r.path;
       item.tooltip = this._buildTooltip(r);
 
-      // Icon based on change state
-      if (r.totalChanges > 0) {
+      // Icon: active → blue, multi-selected → purple, changes → yellow, clean → green
+      if (isActive) {
+        item.iconPath = new vscode.ThemeIcon("repo", new vscode.ThemeColor("charts.blue"));
+      } else if (isMultiSelected) {
+        item.iconPath = new vscode.ThemeIcon("check", new vscode.ThemeColor("charts.purple"));
+      } else if (r.totalChanges > 0) {
         item.iconPath = new vscode.ThemeIcon("git-commit", new vscode.ThemeColor("charts.yellow"));
       } else {
         item.iconPath = new vscode.ThemeIcon("git-commit", new vscode.ThemeColor("charts.green"));
