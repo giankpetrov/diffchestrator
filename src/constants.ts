@@ -37,6 +37,8 @@ export const CMD = {
   stash: "diffchestrator.stash",
   toggleBlame: "diffchestrator.toggleBlame",
   favoriteCurrent: "diffchestrator.favoriteCurrent",
+  stageCurrentFile: "diffchestrator.stageCurrentFile",
+  unstageCurrentFile: "diffchestrator.unstageCurrentFile",
 } as const;
 
 export const CONFIG = {

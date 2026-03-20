@@ -1,7 +1,10 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { GitExecutor } from "../git/gitExecutor";
 import type { RepoManager } from "../services/repoManager";
 import { CMD } from "../constants";
+import { FileStatus, ChangeType } from "../types";
+import type { FileChange } from "../types";
 
 /**
  * Extract repoPath and filePath from various argument shapes:
@@ -13,6 +16,71 @@ function resolveFileItem(item: any): { repoPath: string; filePath: string } | un
   const filePath = item?.fileChange?.path ?? item?.filePath;
   if (repoPath && filePath) return { repoPath, filePath };
   return undefined;
+}
+
+/**
+ * Open the diff (or plain file) for a given FileChange — same logic as
+ * ChangedFilesProvider so the review experience is consistent.
+ */
+async function openFileDiff(repoPath: string, fc: FileChange): Promise<void> {
+  const fileName = path.basename(fc.path);
+
+  if (fc.status === FileStatus.Untracked) {
+    await vscode.commands.executeCommand(
+      "vscode.open",
+      vscode.Uri.file(path.join(repoPath, fc.path))
+    );
+    return;
+  }
+
+  const staged = fc.status === FileStatus.Staged;
+  const leftUri = vscode.Uri.parse(
+    `git-show:${path.join(repoPath, fc.path)}`
+  ).with({
+    query: JSON.stringify({ path: fc.path, ref: staged ? "HEAD" : "", repoPath }),
+  });
+
+  if (fc.changeType === ChangeType.Deleted) {
+    await vscode.commands.executeCommand("vscode.open", leftUri);
+    return;
+  }
+
+  const rightUri = staged
+    ? vscode.Uri.parse(
+        `git-show:${path.join(repoPath, fc.path)}`
+      ).with({
+        query: JSON.stringify({ path: fc.path, ref: ":0", repoPath }),
+      })
+    : vscode.Uri.file(path.join(repoPath, fc.path));
+
+  await vscode.commands.executeCommand(
+    "vscode.diff",
+    leftUri,
+    rightUri,
+    `${fileName} (${staged ? "Staged" : "Working Tree"})`
+  );
+}
+
+/**
+ * After staging/unstaging, open the next file pending review.
+ * "Next" = first unstaged file, then first untracked file.
+ * If nothing remains, do nothing (all reviewed).
+ */
+async function openNextPendingFile(git: GitExecutor, repoPath: string, justStaged: string): Promise<void> {
+  try {
+    const status = await git.status(repoPath);
+    // Skip the file we just acted on (it moved to staged, may still appear briefly)
+    const candidates = [
+      ...status.unstaged.filter(f => f.path !== justStaged),
+      ...status.untracked.filter(f => f.path !== justStaged),
+    ];
+
+    if (candidates.length > 0) {
+      await openFileDiff(repoPath, candidates[0]);
+    }
+  } catch {
+    // Non-critical — tree still refreshes
+  }
 }
 
 export function registerStageCommands(
@@ -33,6 +101,7 @@ export function registerStageCommands(
         try {
           await git.stage(resolved.repoPath, [resolved.filePath]);
           await repoManager.refreshRepo(resolved.repoPath);
+          await openNextPendingFile(git, resolved.repoPath, resolved.filePath);
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);
           vscode.window.showErrorMessage(`Diffchestrator: Failed to stage file: ${msg}`);

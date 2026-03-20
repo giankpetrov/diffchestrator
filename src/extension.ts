@@ -25,6 +25,8 @@ import { FileWatcher } from "./services/fileWatcher";
 import { StatusBarManager } from "./services/statusBar";
 import { InlineBlameService } from "./services/inlineBlame";
 import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
+import { GitExecutor } from "./git/gitExecutor";
+import * as path from "path";
 
 export function activate(context: vscode.ExtensionContext): void {
   const repoManager = new RepoManager();
@@ -106,6 +108,44 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
+  // Stage/unstage the file currently open in the editor
+  const gitForEditor = new GitExecutor();
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.stageCurrentFile, async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) return;
+      const repoPath = repoManager.selectedRepo;
+      if (!repoPath) return;
+      const absFile = editor.document.uri.fsPath;
+      const rel = path.relative(repoPath, absFile);
+      if (rel.startsWith("..")) return;
+      try {
+        await gitForEditor.stage(repoPath, [rel]);
+        await repoManager.refreshRepo(repoPath);
+        vscode.window.showInformationMessage(`Staged: ${rel}`);
+      } catch (err: unknown) {
+        vscode.window.showErrorMessage(`Failed to stage: ${err instanceof Error ? err.message : err}`);
+      }
+    }),
+    vscode.commands.registerCommand(CMD.unstageCurrentFile, async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) return;
+      const repoPath = repoManager.selectedRepo;
+      if (!repoPath) return;
+      const absFile = editor.document.uri.fsPath;
+      const rel = path.relative(repoPath, absFile);
+      if (rel.startsWith("..")) return;
+      try {
+        await gitForEditor.unstage(repoPath, [rel]);
+        await repoManager.refreshRepo(repoPath);
+        vscode.window.showInformationMessage(`Unstaged: ${rel}`);
+      } catch (err: unknown) {
+        vscode.window.showErrorMessage(`Failed to unstage: ${err instanceof Error ? err.message : err}`);
+      }
+    })
+  );
+
   // Select / deselect repo (multi-select toggle)
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -135,7 +175,7 @@ export function activate(context: vscode.ExtensionContext): void {
     return repoManager.selectedRepo;
   }
 
-  // View diff — selects repo and shows changed files panel
+  // View diff — selects repo, shows changed files panel, auto-opens first changed file
   context.subscriptions.push(
     vscode.commands.registerCommand(
       CMD.viewDiff,
@@ -149,6 +189,44 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         repoManager.selectRepo(repoPath);
         await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+
+        // Auto-open first changed file in diff editor
+        try {
+          const git = new GitExecutor();
+          const status = await git.status(repoPath);
+          const firstFile = status.unstaged[0] ?? status.untracked[0] ?? status.staged[0];
+          if (firstFile) {
+            const filePath = firstFile.path;
+            if (firstFile.status === "untracked") {
+              await vscode.commands.executeCommand(
+                "vscode.open",
+                vscode.Uri.file(path.join(repoPath, filePath))
+              );
+            } else {
+              const staged = firstFile.status === "staged";
+              const leftUri = vscode.Uri.parse(
+                `git-show:${path.join(repoPath, filePath)}`
+              ).with({
+                query: JSON.stringify({ path: filePath, ref: "HEAD", repoPath }),
+              });
+              const rightUri = staged
+                ? vscode.Uri.parse(
+                    `git-show:${path.join(repoPath, filePath)}`
+                  ).with({
+                    query: JSON.stringify({ path: filePath, ref: ":0", repoPath }),
+                  })
+                : vscode.Uri.file(path.join(repoPath, filePath));
+              await vscode.commands.executeCommand(
+                "vscode.diff",
+                leftUri,
+                rightUri,
+                `${path.basename(filePath)} (${staged ? "Staged" : "Working Tree"})`
+              );
+            }
+          }
+        } catch {
+          // Non-critical — file list still works
+        }
       }
     )
   );

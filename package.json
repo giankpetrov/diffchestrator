@@ -225,6 +225,18 @@
         "icon": "$(discard)"
       },
       {
+        "command": "diffchestrator.stageCurrentFile",
+        "title": "Stage This File",
+        "category": "Diffchestrator",
+        "icon": "$(add)"
+      },
+      {
+        "command": "diffchestrator.unstageCurrentFile",
+        "title": "Unstage This File",
+        "category": "Diffchestrator",
+        "icon": "$(remove)"
+      },
+      {
         "command": "diffchestrator.switchBranch",
         "title": "Switch Branch",
         "category": "Diffchestrator",
@@ -244,6 +256,18 @@
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "diffchestrator.stageCurrentFile",
+          "group": "navigation",
+          "when": "resourceScheme == file && diffchestrator.hasSelectedRepo"
+        },
+        {
+          "command": "diffchestrator.unstageCurrentFile",
+          "group": "navigation",
+          "when": "resourceScheme == file && diffchestrator.hasSelectedRepo"
+        }
+      ],
       "view/title": [
         {
           "command": "diffchestrator.scan",
