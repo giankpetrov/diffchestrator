@@ -2,7 +2,7 @@
 
 /**
  * Auto-detect semver bump from conventional commits since last version tag,
- * bump package.json, build, and package the .vsix.
+ * bump package.json, commit, tag, build, and package the .vsix.
  *
  * Usage:
  *   node scripts/release.mjs          # auto-detect from commits
@@ -78,6 +78,24 @@ function bumpVersion(bump) {
   return pkg.version;
 }
 
+// ── Commit and tag ──────────────────────────────────────────────────
+function commitAndTag(version) {
+  // Stage only the version bump
+  run("git add package.json");
+
+  // Check if there's actually something to commit
+  try {
+    run("git diff --cached --quiet -- package.json");
+    // No diff means package.json didn't change (shouldn't happen, but guard)
+    return;
+  } catch {
+    // Exit code 1 = there are staged changes, proceed
+  }
+
+  run(`git commit -m "chore(release): v${version}"`);
+  run(`git tag v${version}`);
+}
+
 // ── Main ────────────────────────────────────────────────────────────
 const forced = process.argv[2];
 if (forced && !["patch", "minor", "major"].includes(forced)) {
@@ -91,7 +109,11 @@ const version = bumpVersion(bump);
 
 console.log(`\n${tag ? `Last tag: ${tag}` : "No previous tag found"}`);
 console.log(`Bump:     ${bump}`);
-console.log(`Version:  ${version}\n`);
+console.log(`Version:  v${version}\n`);
+
+// Commit version bump and tag before building
+commitAndTag(version);
+console.log(`Committed and tagged v${version}\n`);
 
 // Build + package
 execSync("npm run package", { cwd: root, stdio: "inherit" });
