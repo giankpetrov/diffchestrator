@@ -29,12 +29,48 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Git content provider for diff URIs
   const gitContentProvider = new GitContentProvider();
+  // Create tree views (not just providers) so we can set description + badge
+  const repoTreeView = vscode.window.createTreeView(VIEW_REPOS, { treeDataProvider: repoTree });
+  const favTreeView = vscode.window.createTreeView(VIEW_FAVORITES, { treeDataProvider: favTree });
+  const changedFilesView = vscode.window.createTreeView(VIEW_CHANGED_FILES, { treeDataProvider: changedFiles });
+
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider("git-show", gitContentProvider),
-    vscode.window.registerTreeDataProvider(VIEW_REPOS, repoTree),
-    vscode.window.registerTreeDataProvider(VIEW_FAVORITES, favTree),
-    vscode.window.registerTreeDataProvider(VIEW_CHANGED_FILES, changedFiles)
+    repoTreeView,
+    favTreeView,
+    changedFilesView,
   );
+
+  // Update view descriptions + badge when state changes
+  const updateViewInfo = () => {
+    const repos = repoManager.repos;
+    const totalChanges = repos.reduce((sum, r) => sum + r.totalChanges, 0);
+
+    // Repos view: show count
+    repoTreeView.description = repoManager.changedOnly
+      ? `${repos.filter(r => r.totalChanges > 0).length} changed`
+      : `${repos.length} repos`;
+
+    // Activity bar badge: total changes across all repos
+    repoTreeView.badge = totalChanges > 0
+      ? { value: totalChanges, tooltip: `${totalChanges} total changes` }
+      : undefined;
+
+    // Changed files view: show active repo name + branch
+    const selected = repoManager.selectedRepo;
+    if (selected) {
+      const repo = repos.find(r => r.path === selected);
+      const name = selected.split("/").pop() ?? "";
+      const branch = repo?.branch ?? "";
+      const changes = repo?.totalChanges ?? 0;
+      changedFilesView.description = `${name} (${branch})${changes > 0 ? ` — ${changes} changes` : ""}`;
+    } else {
+      changedFilesView.description = undefined;
+    }
+  };
+
+  repoManager.onDidChangeRepos(updateViewInfo);
+  repoManager.onDidChangeSelection(updateViewInfo);
 
   // Register command modules
   registerScanCommands(context, repoManager);
