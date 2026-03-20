@@ -271,26 +271,14 @@
       ]
     },
     "keybindings": [
-      {
-        "command": "diffchestrator.scan",
-        "key": "ctrl+shift+d",
-        "mac": "cmd+shift+d"
-      },
-      {
-        "command": "diffchestrator.browseFiles",
-        "key": "ctrl+shift+o",
-        "mac": "cmd+shift+o"
-      },
-      {
-        "command": "diffchestrator.switchRepo",
-        "key": "ctrl+shift+r",
-        "mac": "cmd+shift+r"
-      },
-      {
-        "command": "diffchestrator.aiCommit",
-        "key": "ctrl+alt+c",
-        "mac": "cmd+alt+c"
-      }
+      { "command": "diffchestrator.scan", "key": "alt+d alt+s", "mac": "alt+d alt+s" },
+      { "command": "diffchestrator.switchRepo", "key": "alt+d alt+r", "mac": "alt+d alt+r" },
+      { "command": "diffchestrator.browseFiles", "key": "alt+d alt+f", "mac": "alt+d alt+f" },
+      { "command": "diffchestrator.aiCommit", "key": "alt+d alt+c", "mac": "alt+d alt+c" },
+      { "command": "diffchestrator.push", "key": "alt+d alt+p", "mac": "alt+d alt+p" },
+      { "command": "diffchestrator.openTerminal", "key": "alt+d alt+t", "mac": "alt+d alt+t" },
+      { "command": "diffchestrator.openClaudeCode", "key": "alt+d alt+l", "mac": "alt+d alt+l" },
+      { "command": "diffchestrator.toggleChangedOnly", "key": "alt+d alt+d", "mac": "alt+d alt+d" }
     ],
     "configuration": {
       "title": "Diffchestrator",
