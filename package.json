@@ -271,14 +271,14 @@
       ]
     },
     "keybindings": [
-      { "command": "diffchestrator.scan", "key": "alt+d alt+s", "mac": "alt+d alt+s" },
-      { "command": "diffchestrator.switchRepo", "key": "alt+d alt+r", "mac": "alt+d alt+r" },
-      { "command": "diffchestrator.browseFiles", "key": "alt+d alt+f", "mac": "alt+d alt+f" },
-      { "command": "diffchestrator.aiCommit", "key": "alt+d alt+c", "mac": "alt+d alt+c" },
-      { "command": "diffchestrator.push", "key": "alt+d alt+p", "mac": "alt+d alt+p" },
-      { "command": "diffchestrator.openTerminal", "key": "alt+d alt+t", "mac": "alt+d alt+t" },
-      { "command": "diffchestrator.openClaudeCode", "key": "alt+d alt+l", "mac": "alt+d alt+l" },
-      { "command": "diffchestrator.toggleChangedOnly", "key": "alt+d alt+d", "mac": "alt+d alt+d" }
+      { "command": "diffchestrator.scan", "key": "ctrl+d s", "mac": "cmd+d s" },
+      { "command": "diffchestrator.switchRepo", "key": "ctrl+d r", "mac": "cmd+d r" },
+      { "command": "diffchestrator.browseFiles", "key": "ctrl+d f", "mac": "cmd+d f" },
+      { "command": "diffchestrator.aiCommit", "key": "ctrl+d c", "mac": "cmd+d c" },
+      { "command": "diffchestrator.push", "key": "ctrl+d p", "mac": "cmd+d p" },
+      { "command": "diffchestrator.openTerminal", "key": "ctrl+d t", "mac": "cmd+d t" },
+      { "command": "diffchestrator.openClaudeCode", "key": "ctrl+d l", "mac": "cmd+d l" },
+      { "command": "diffchestrator.toggleChangedOnly", "key": "ctrl+d d", "mac": "cmd+d d" }
     ],
     "configuration": {
       "title": "Diffchestrator",
