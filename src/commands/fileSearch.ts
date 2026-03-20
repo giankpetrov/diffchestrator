@@ -136,6 +136,23 @@ export function registerFileSearchCommand(
     })
   );
 
+  // Search in repo — opens VS Code's native search scoped to the selected repo
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.searchInRepo, async (item?: any) => {
+      const repoPath = item?.repo?.path ?? item?.fullPath ?? item?.path ?? repoManager.selectedRepo;
+      if (!repoPath) {
+        vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
+        return;
+      }
+
+      await vscode.commands.executeCommand("workbench.action.findInFiles", {
+        query: "",
+        filesToInclude: repoPath,
+        triggerSearch: false,
+      });
+    })
+  );
+
   // Switch repo — QuickPick to select a repo and make it active
   context.subscriptions.push(
     vscode.commands.registerCommand(CMD.switchRepo, async () => {

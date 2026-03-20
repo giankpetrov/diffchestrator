@@ -37,6 +37,7 @@ export const CMD = {
   stash: "diffchestrator.stash",
   toggleBlame: "diffchestrator.toggleBlame",
   favoriteCurrent: "diffchestrator.favoriteCurrent",
+  searchInRepo: "diffchestrator.searchInRepo",
   stageCurrentFile: "diffchestrator.stageCurrentFile",
   unstageCurrentFile: "diffchestrator.unstageCurrentFile",
 } as const;
