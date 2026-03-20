@@ -145,10 +145,38 @@ export function registerFileSearchCommand(
         return;
       }
 
-      // Use filesToInclude with trailing glob so VS Code treats it as a folder scope
+      // VS Code search filesToInclude needs a path relative to a workspace folder.
+      // Find the workspace folder that contains this repo and build a relative glob.
+      const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+      let includePattern = "";
+
+      for (const folder of workspaceFolders) {
+        const rel = path.relative(folder.uri.fsPath, repoPath);
+        if (!rel.startsWith("..") && !path.isAbsolute(rel)) {
+          // Repo is inside this workspace folder
+          includePattern = rel ? `./${rel}/**` : "**";
+          break;
+        }
+      }
+
+      if (!includePattern) {
+        // Repo is not inside any workspace folder — add it temporarily
+        const uri = vscode.Uri.file(repoPath);
+        const added = vscode.workspace.updateWorkspaceFolders(
+          workspaceFolders.length, 0,
+          { uri, name: `${path.basename(repoPath)} (search)` }
+        );
+        if (added) {
+          includePattern = `./${path.basename(repoPath)} (search)/**`;
+        } else {
+          // Fallback: just open search with absolute path, user can fix manually
+          includePattern = repoPath;
+        }
+      }
+
       await vscode.commands.executeCommand("workbench.action.findInFiles", {
         query: "",
-        filesToInclude: `${repoPath}${path.sep}**`,
+        filesToInclude: includePattern,
         triggerSearch: false,
       });
     })
