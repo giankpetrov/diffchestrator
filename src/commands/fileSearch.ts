@@ -136,7 +136,7 @@ export function registerFileSearchCommand(
     })
   );
 
-  // Search in repo — live git grep results in a QuickPick
+  // Open repo in new VS Code window — gives full native search, explorer, etc.
   context.subscriptions.push(
     vscode.commands.registerCommand(CMD.searchInRepo, async (item?: any) => {
       const repoPath = item?.repo?.path ?? item?.fullPath ?? item?.path ?? repoManager.selectedRepo;
@@ -144,60 +144,7 @@ export function registerFileSearchCommand(
         vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
         return;
       }
-
-      const repoName = path.basename(repoPath);
-      const quickPick = vscode.window.createQuickPick();
-      quickPick.placeholder = `Search in ${repoName} (git grep)...`;
-      quickPick.matchOnDescription = true;
-      quickPick.matchOnDetail = true;
-
-      let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-
-      quickPick.onDidChangeValue((value) => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        if (value.length < 2) {
-          quickPick.items = [];
-          return;
-        }
-
-        debounceTimer = setTimeout(async () => {
-          quickPick.busy = true;
-          try {
-            const matches = await git.grep(repoPath, value);
-            quickPick.items = matches.map((m) => ({
-              label: `$(file) ${path.basename(m.file)}:${m.line}`,
-              description: path.dirname(m.file) !== "." ? path.dirname(m.file) : undefined,
-              detail: m.text,
-              _fullPath: path.join(repoPath, m.file),
-              _line: m.line,
-            }));
-          } catch {
-            quickPick.items = [];
-          }
-          quickPick.busy = false;
-        }, 300);
-      });
-
-      quickPick.onDidAccept(() => {
-        const selected = quickPick.selectedItems[0] as
-          | (vscode.QuickPickItem & { _fullPath?: string; _line?: number })
-          | undefined;
-        if (selected?._fullPath) {
-          const line = (selected._line ?? 1) - 1;
-          vscode.window.showTextDocument(
-            vscode.Uri.file(selected._fullPath),
-            { selection: new vscode.Range(line, 0, line, 0) }
-          );
-        }
-        quickPick.dispose();
-      });
-
-      quickPick.onDidHide(() => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        quickPick.dispose();
-      });
-
-      quickPick.show();
+      await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(repoPath), true);
     })
   );
 

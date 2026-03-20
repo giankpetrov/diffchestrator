@@ -86,9 +86,9 @@
       },
       {
         "command": "diffchestrator.searchInRepo",
-        "title": "Search in Repo",
+        "title": "Open Repo in New Window",
         "category": "Diffchestrator",
-        "icon": "$(search)"
+        "icon": "$(multiple-windows)"
       },
       {
         "command": "diffchestrator.favoriteCurrent",
