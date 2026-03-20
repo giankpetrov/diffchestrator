@@ -431,7 +431,7 @@ export class GitExecutor {
 
   async grep(repoPath: string, query: string, maxResults = 100): Promise<{ file: string; line: number; text: string }[]> {
     const result = await this._run(
-      ["grep", "-n", "-I", "--no-color", "-i", "--max-count=5", "-e", query, "--", ":!*.min.*", ":!*.lock"],
+      ["grep", "-n", "-I", "--no-color", "-i", "-e", query, "--", ":!*.min.*", ":!*.lock"],
       repoPath
     );
     // git grep exits 1 when no matches — not an error
