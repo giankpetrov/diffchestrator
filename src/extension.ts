@@ -228,6 +228,9 @@ export function activate(context: vscode.ExtensionContext): void {
                 `${path.basename(filePath)} (${staged ? "Staged" : "Working Tree"})`
               );
             }
+          } else {
+            // No changes — close stale diff from previous repo
+            await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
           }
         } catch {
           // Non-critical — file list still works
