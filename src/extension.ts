@@ -33,6 +33,25 @@ export function activate(context: vscode.ExtensionContext): void {
   const repoManager = new RepoManager();
   context.subscriptions.push(repoManager);
 
+  // Track last open file per repo so switching back restores context
+  const lastOpenFile = new Map<string, vscode.Uri>();
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (!editor) return;
+      const repoPath = repoManager.selectedRepo;
+      if (!repoPath) return;
+      const uri = editor.document.uri;
+      // Only track file:// and git-show: URIs that belong to the selected repo
+      if (uri.scheme === "file" && uri.fsPath.startsWith(repoPath)) {
+        lastOpenFile.set(repoPath, uri);
+      } else if (uri.scheme === "git-show") {
+        // Diff editor — track the URI so we can restore it
+        lastOpenFile.set(repoPath, uri);
+      }
+    })
+  );
+
   // Tree views
   const activeRepos = new ActiveReposProvider(repoManager);
   const repoTree = new RepoTreeProvider(repoManager);
@@ -209,7 +228,25 @@ export function activate(context: vscode.ExtensionContext): void {
         // Show the repo's terminal if one exists (preserves focus on editor)
         await showTerminalIfExists(repoPath);
 
-        // Auto-open first changed file in diff editor
+        // Restore last open file if we have one for this repo
+        const remembered = lastOpenFile.get(repoPath);
+        if (remembered) {
+          try {
+            if (remembered.scheme === "file") {
+              await vscode.window.showTextDocument(remembered, { preview: false });
+            } else {
+              // git-show URI (diff editor) — re-open the document
+              const doc = await vscode.workspace.openTextDocument(remembered);
+              await vscode.window.showTextDocument(doc, { preview: false });
+            }
+            return;
+          } catch {
+            // File may have been deleted — fall through to default behavior
+            lastOpenFile.delete(repoPath);
+          }
+        }
+
+        // No remembered file — auto-open first changed file in diff editor
         try {
           const git = new GitExecutor();
           const status = await git.status(repoPath);
