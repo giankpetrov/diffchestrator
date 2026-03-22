@@ -35,14 +35,21 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Track last open file per repo so switching back restores context
   const lastOpenFile = new Map<string, vscode.Uri>();
+  let switchingRepo = false; // flag to ignore editor changes during repo switch
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (!editor) return;
+      if (switchingRepo) return; // ignore changes caused by repo switch
       const repoPath = repoManager.selectedRepo;
       if (!repoPath) return;
+
+      if (!editor) {
+        // All editors closed while user is in this repo — clear memory
+        lastOpenFile.delete(repoPath);
+        return;
+      }
+
       const uri = editor.document.uri;
-      // Only track file:// and git-show: URIs that belong to the selected repo
       if (uri.scheme === "file" && uri.fsPath.startsWith(repoPath)) {
         lastOpenFile.set(repoPath, uri);
       } else if (uri.scheme === "git-show") {
@@ -260,17 +267,19 @@ export function activate(context: vscode.ExtensionContext): void {
         }
 
         // Close editors from the previous repo before switching
-        if (previousRepoPath && previousRepoPath !== repoPath) {
-          await closeEditorsForRepo(previousRepoPath);
-          // Clear remembered file since we just closed all its editors
-          lastOpenFile.delete(previousRepoPath);
-        }
-        previousRepoPath = repoPath;
+        switchingRepo = true;
+        try {
+          if (previousRepoPath && previousRepoPath !== repoPath) {
+            await closeEditorsForRepo(previousRepoPath);
+          }
+          previousRepoPath = repoPath;
 
-        repoManager.selectRepo(repoPath);
-        await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
-        // Show the repo's terminal if one exists (preserves focus on editor)
-        await showTerminalIfExists(repoPath);
+          repoManager.selectRepo(repoPath);
+          await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+          await showTerminalIfExists(repoPath);
+        } finally {
+          switchingRepo = false;
+        }
 
         // Priority: changed files first (review workflow), then remembered file
         try {
