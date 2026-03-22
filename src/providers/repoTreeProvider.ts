@@ -28,7 +28,8 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       this._onDidChangeTreeData.fire();
     });
     repoManager.onDidChangeSelection(() => {
-      // Re-render tree to update active/selected highlights
+      // Clear cached tree so getTreeItem runs fresh with new selection state
+      this._root = undefined;
       this._onDidChangeTreeData.fire();
     });
   }

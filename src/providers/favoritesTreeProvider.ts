@@ -22,6 +22,11 @@ export class FavoritesTreeProvider
       this._onDidChangeTreeData.fire();
     });
 
+    // Refresh when selection changes (to update active highlight)
+    repoManager.onDidChangeSelection(() => {
+      this._onDidChangeTreeData.fire();
+    });
+
     // Refresh when config changes (favorites list)
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("diffchestrator.favorites")) {
@@ -40,11 +45,14 @@ export class FavoritesTreeProvider
     );
 
     const repo = this.repoManager.getRepo(element.repoPath);
+    const isActive = element.repoPath === this.repoManager.selectedRepo;
+
     if (repo) {
       const parts: string[] = [];
+      if (isActive) parts.push("●");
       if (repo.branch) parts.push(repo.branch);
       if (repo.totalChanges > 0) parts.push(`${repo.totalChanges} changes`);
-      item.description = parts.join(" | ");
+      item.description = parts.join(" · ");
     } else {
       item.description = "(not scanned)";
     }
@@ -52,10 +60,11 @@ export class FavoritesTreeProvider
     item.contextValue = "repo";
     (item as vscode.TreeItem & { path: string }).path = element.repoPath;
     item.tooltip = element.repoPath;
-    item.iconPath = new vscode.ThemeIcon(
-      "star-full",
-      new vscode.ThemeColor("charts.yellow")
-    );
+
+    // Highlight active repo with blue star, others yellow
+    item.iconPath = isActive
+      ? new vscode.ThemeIcon("star-full", new vscode.ThemeColor("charts.blue"))
+      : new vscode.ThemeIcon("star-full", new vscode.ThemeColor("charts.yellow"));
 
     item.command = {
       command: CMD.viewDiff,
