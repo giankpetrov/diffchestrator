@@ -38,6 +38,7 @@ export const CMD = {
   toggleBlame: "diffchestrator.toggleBlame",
   favoriteCurrent: "diffchestrator.favoriteCurrent",
   searchInRepo: "diffchestrator.searchInRepo",
+  grepInRepo: "diffchestrator.grepInRepo",
   stageCurrentFile: "diffchestrator.stageCurrentFile",
   unstageCurrentFile: "diffchestrator.unstageCurrentFile",
   cycleActiveRepo: "diffchestrator.cycleActiveRepo",

@@ -84,6 +84,12 @@
         "icon": "$(star)"
       },
       {
+        "command": "diffchestrator.grepInRepo",
+        "title": "Search in Repo",
+        "category": "Diffchestrator",
+        "icon": "$(search)"
+      },
+      {
         "command": "diffchestrator.searchInRepo",
         "title": "Open Repo in New Window",
         "category": "Diffchestrator",
@@ -358,9 +364,14 @@
           "group": "1_actions@7"
         },
         {
-          "command": "diffchestrator.searchInRepo",
+          "command": "diffchestrator.grepInRepo",
           "when": "viewItem == repo",
           "group": "1_actions@8"
+        },
+        {
+          "command": "diffchestrator.searchInRepo",
+          "when": "viewItem == repo",
+          "group": "1_actions@9"
         },
         {
           "command": "diffchestrator.openTerminal",
@@ -486,9 +497,14 @@
         "mac": "cmd+d e"
       },
       {
-        "command": "diffchestrator.searchInRepo",
+        "command": "diffchestrator.grepInRepo",
         "key": "ctrl+d /",
         "mac": "cmd+d /"
+      },
+      {
+        "command": "diffchestrator.searchInRepo",
+        "key": "ctrl+d w",
+        "mac": "cmd+d w"
       },
       {
         "command": "diffchestrator.cycleActiveRepo",

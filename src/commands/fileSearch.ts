@@ -136,6 +136,75 @@ export function registerFileSearchCommand(
     })
   );
 
+  // Quick search in repo via git grep QuickPick
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.grepInRepo, async (item?: any) => {
+      const repoPath = item?.repo?.path ?? item?.fullPath ?? item?.path ?? repoManager.selectedRepo;
+      if (!repoPath) {
+        vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
+        return;
+      }
+
+      const repoName = path.basename(repoPath);
+      const quickPick = vscode.window.createQuickPick();
+      quickPick.placeholder = `Search in ${repoName} (type 2+ chars)...`;
+      quickPick.matchOnDescription = true;
+      quickPick.matchOnDetail = true;
+
+      let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+      quickPick.onDidChangeValue((value) => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (value.length < 2) {
+          quickPick.items = [];
+          return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+          quickPick.busy = true;
+          try {
+            const matches = await git.grep(repoPath, value);
+            if (matches.length === 0) {
+              quickPick.items = [{ label: "$(info) No matches found", description: "", _noAction: true } as any];
+            } else {
+              quickPick.items = matches.map((m) => ({
+                label: `$(file) ${path.basename(m.file)}:${m.line}`,
+                description: path.dirname(m.file) !== "." ? path.dirname(m.file) : undefined,
+                detail: m.text,
+                _fullPath: path.join(repoPath, m.file),
+                _line: m.line,
+              }));
+            }
+          } catch {
+            quickPick.items = [{ label: "$(warning) Search failed", description: "" }];
+          }
+          quickPick.busy = false;
+        }, 300);
+      });
+
+      quickPick.onDidAccept(() => {
+        const selected = quickPick.selectedItems[0] as
+          | (vscode.QuickPickItem & { _fullPath?: string; _line?: number; _noAction?: boolean })
+          | undefined;
+        if (selected?._fullPath && !selected._noAction) {
+          const line = (selected._line ?? 1) - 1;
+          vscode.window.showTextDocument(
+            vscode.Uri.file(selected._fullPath),
+            { selection: new vscode.Range(line, 0, line, 0) }
+          );
+        }
+        quickPick.dispose();
+      });
+
+      quickPick.onDidHide(() => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        quickPick.dispose();
+      });
+
+      quickPick.show();
+    })
+  );
+
   // Open repo in new VS Code window — gives full native search, explorer, etc.
   context.subscriptions.push(
     vscode.commands.registerCommand(CMD.searchInRepo, async (item?: any) => {
