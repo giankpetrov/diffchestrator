@@ -81,6 +81,10 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (isActive) parts.push("● active");
       if (isMultiSelected) parts.push("✓ selected");
       if (r.branch) parts.push(r.branch);
+      const sync: string[] = [];
+      if (r.ahead > 0) sync.push(`↑${r.ahead}`);
+      if (r.behind > 0) sync.push(`↓${r.behind}`);
+      if (sync.length > 0) parts.push(sync.join(" "));
       if (r.totalChanges > 0) parts.push(`${r.totalChanges} changes`);
       item.description = parts.join(" · ");
       // Unique id per state so VS Code resets selection on refresh
@@ -246,6 +250,12 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (r.stagedCount > 0) lines.push(`Staged: ${r.stagedCount}`);
     if (r.unstagedCount > 0) lines.push(`Unstaged: ${r.unstagedCount}`);
     if (r.untrackedCount > 0) lines.push(`Untracked: ${r.untrackedCount}`);
+    if (r.ahead > 0 || r.behind > 0) {
+      const syncParts: string[] = [];
+      if (r.ahead > 0) syncParts.push(`${r.ahead} ahead`);
+      if (r.behind > 0) syncParts.push(`${r.behind} behind`);
+      lines.push(`Sync: ${syncParts.join(", ")}`);
+    }
     if (r.remoteUrl) lines.push(`Remote: ${r.remoteUrl}`);
 
     const lastCommit = this._lastCommitCache.get(r.path);

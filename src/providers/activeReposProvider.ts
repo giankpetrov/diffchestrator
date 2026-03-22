@@ -43,6 +43,11 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
 
     const parts: string[] = [];
     if (r.branch) parts.push(r.branch);
+    // Ahead/behind remote
+    const sync: string[] = [];
+    if (r.ahead > 0) sync.push(`↑${r.ahead}`);
+    if (r.behind > 0) sync.push(`↓${r.behind}`);
+    if (sync.length > 0) parts.push(sync.join(" "));
     if (r.totalChanges > 0) parts.push(`${r.totalChanges} changes`);
 
     // Terminal indicator: show which sessions are active

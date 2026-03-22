@@ -93,7 +93,9 @@ export class RepoManager implements vscode.Disposable {
         existing.stagedCount === s.staged &&
         existing.unstagedCount === s.unstaged &&
         existing.untrackedCount === s.untracked &&
-        existing.branch === s.branch
+        existing.branch === s.branch &&
+        existing.ahead === s.ahead &&
+        existing.behind === s.behind
       ) {
         return; // nothing changed, skip cascade
       }
@@ -103,6 +105,8 @@ export class RepoManager implements vscode.Disposable {
       existing.untrackedCount = s.untracked;
       existing.totalChanges = totalChanges;
       existing.branch = s.branch;
+      existing.ahead = s.ahead;
+      existing.behind = s.behind;
       this._onDidChangeRepos.fire();
     } catch {
       /* ignore */

@@ -51,6 +51,10 @@ export class FavoritesTreeProvider
       const parts: string[] = [];
       if (isActive) parts.push("●");
       if (repo.branch) parts.push(repo.branch);
+      const sync: string[] = [];
+      if (repo.ahead > 0) sync.push(`↑${repo.ahead}`);
+      if (repo.behind > 0) sync.push(`↓${repo.behind}`);
+      if (sync.length > 0) parts.push(sync.join(" "));
       if (repo.totalChanges > 0) parts.push(`${repo.totalChanges} changes`);
       item.description = parts.join(" · ");
     } else {

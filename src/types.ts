@@ -43,6 +43,8 @@ export interface RepoSummary {
   unstagedCount: number;
   untrackedCount: number;
   totalChanges: number;
+  ahead: number;
+  behind: number;
 }
 
 export interface CommitEntry {
