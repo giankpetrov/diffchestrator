@@ -26,9 +26,10 @@ export class RepoManager implements vscode.Disposable {
   private _onDidDetectCommit = new vscode.EventEmitter<{ repoPath: string; repoName: string }>();
   readonly onDidDetectCommit = this._onDidDetectCommit.event;
 
-  // Fired when a clean repo gets new changes (files modified externally)
+  // Fired when a clean repo gets new changes (debounced — waits for quiet period)
   private _onDidDetectChanges = new vscode.EventEmitter<{ repoPath: string; repoName: string; count: number }>();
   readonly onDidDetectChanges = this._onDidDetectChanges.event;
+  private _changesDebounce = new Map<string, ReturnType<typeof setTimeout>>();
 
   private _onDidScanProgress = new vscode.EventEmitter<{
     dirsScanned: number;
@@ -127,10 +128,28 @@ export class RepoManager implements vscode.Disposable {
       // Fire specific notifications (after state update)
       const repoName = existing.name;
       if (newCommit) {
+        // Commit notification fires immediately — work is done
         this._onDidDetectCommit.fire({ repoPath, repoName });
+        // Clear any pending changes debounce since the commit supersedes it
+        const pendingTimer = this._changesDebounce.get(repoPath);
+        if (pendingTimer) {
+          clearTimeout(pendingTimer);
+          this._changesDebounce.delete(repoPath);
+        }
       }
       if (newChanges) {
-        this._onDidDetectChanges.fire({ repoPath, repoName, count: totalChanges });
+        // Debounce changes notification — wait 15s of quiet before firing,
+        // so we don't notify mid-edit while Claude is still working
+        const existingTimer = this._changesDebounce.get(repoPath);
+        if (existingTimer) clearTimeout(existingTimer);
+        this._changesDebounce.set(repoPath, setTimeout(() => {
+          this._changesDebounce.delete(repoPath);
+          // Re-check: still has changes and no commit happened since
+          const current = this._repos.get(repoPath);
+          if (current && current.totalChanges > 0) {
+            this._onDidDetectChanges.fire({ repoPath, repoName, count: current.totalChanges });
+          }
+        }, 15_000));
       }
     } catch {
       /* ignore */
@@ -236,6 +255,8 @@ export class RepoManager implements vscode.Disposable {
   dispose(): void {
     if (this._refreshTimer) clearInterval(this._refreshTimer);
     this._focusDisposable?.dispose();
+    for (const timer of this._changesDebounce.values()) clearTimeout(timer);
+    this._changesDebounce.clear();
     this._onDidChangeRepos.dispose();
     this._onDidChangeSelection.dispose();
     this._onDidDetectCommit.dispose();
