@@ -34,17 +34,20 @@ const NAME_PATTERNS: Record<TerminalKind, RegExp[]> = {
 };
 
 function buildPatterns(repoPath: string, kind: TerminalKind): RegExp[] {
-  const name = path.basename(repoPath);
+  const name = escapeRegex(path.basename(repoPath));
   switch (kind) {
     case "claude":
       return [
-        new RegExp(`^Claude:\\s*${escapeRegex(name)}`, "i"),
-        new RegExp(`^Claude Code.*${escapeRegex(name)}`, "i"),
+        new RegExp(`^Claude:\\s*${name}$`, "i"),
+        new RegExp(`^Claude Code[^]*${name}$`, "i"),
       ];
     case "yolo":
-      return [new RegExp(`^YOLO:\\s*${escapeRegex(name)}`, "i")];
+      // yolo runs claude which renames the terminal, so also check Claude: prefix
+      return [
+        new RegExp(`^YOLO:\\s*${name}$`, "i"),
+      ];
     case "shell":
-      return [new RegExp(`^DC:\\s*${escapeRegex(name)}`, "i")];
+      return [new RegExp(`^DC:\\s*${name}$`, "i")];
   }
 }
 
@@ -122,10 +125,11 @@ export async function showTerminalIfExists(repoPath: string): Promise<boolean> {
   for (const kind of kinds) {
     const existing = getAlive(repoPath, kind);
     if (existing) {
+      // show(false) takes focus to force the terminal panel to switch tabs
       existing.show(false);
-      setTimeout(() => {
-        vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
-      }, 100);
+      // Wait for the tab switch to settle, then return focus to editor
+      await new Promise((r) => setTimeout(r, 150));
+      await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
       return true;
     }
   }
