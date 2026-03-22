@@ -102,6 +102,36 @@
         "icon": "$(search)"
       },
       {
+        "command": "diffchestrator.closeActiveRepo",
+        "title": "Close Active Repo",
+        "category": "Diffchestrator",
+        "icon": "$(close)"
+      },
+      {
+        "command": "diffchestrator.closePickedRepo",
+        "title": "Close Active Repo (Pick)",
+        "category": "Diffchestrator",
+        "icon": "$(close-all)"
+      },
+      {
+        "command": "diffchestrator.closeAllActiveRepos",
+        "title": "Close All Active Repos",
+        "category": "Diffchestrator",
+        "icon": "$(close-all)"
+      },
+      {
+        "command": "diffchestrator.nextChangedFile",
+        "title": "Next Changed File",
+        "category": "Diffchestrator",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "diffchestrator.prevChangedFile",
+        "title": "Previous Changed File",
+        "category": "Diffchestrator",
+        "icon": "$(arrow-up)"
+      },
+      {
         "command": "diffchestrator.searchInRepo",
         "title": "Open Repo in New Window",
         "category": "Diffchestrator",
@@ -532,6 +562,31 @@
         "command": "diffchestrator.cycleActiveRepo",
         "key": "ctrl+d tab",
         "mac": "cmd+d tab"
+      },
+      {
+        "command": "diffchestrator.closeActiveRepo",
+        "key": "ctrl+d q",
+        "mac": "cmd+d q"
+      },
+      {
+        "command": "diffchestrator.closePickedRepo",
+        "key": "ctrl+d shift+q",
+        "mac": "cmd+d shift+q"
+      },
+      {
+        "command": "diffchestrator.closeAllActiveRepos",
+        "key": "ctrl+d shift+tab",
+        "mac": "cmd+d shift+tab"
+      },
+      {
+        "command": "diffchestrator.nextChangedFile",
+        "key": "ctrl+d n",
+        "mac": "cmd+d n"
+      },
+      {
+        "command": "diffchestrator.prevChangedFile",
+        "key": "ctrl+d shift+n",
+        "mac": "cmd+d shift+n"
       }
     ],
     "configuration": {

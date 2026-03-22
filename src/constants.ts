@@ -44,6 +44,11 @@ export const CMD = {
   stageCurrentFile: "diffchestrator.stageCurrentFile",
   unstageCurrentFile: "diffchestrator.unstageCurrentFile",
   cycleActiveRepo: "diffchestrator.cycleActiveRepo",
+  closeActiveRepo: "diffchestrator.closeActiveRepo",
+  closePickedRepo: "diffchestrator.closePickedRepo",
+  closeAllActiveRepos: "diffchestrator.closeAllActiveRepos",
+  nextChangedFile: "diffchestrator.nextChangedFile",
+  prevChangedFile: "diffchestrator.prevChangedFile",
 } as const;
 
 export const CONFIG = {

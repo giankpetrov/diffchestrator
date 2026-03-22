@@ -5,7 +5,7 @@ import { FavoritesTreeProvider } from "./providers/favoritesTreeProvider";
 import { ChangedFilesProvider } from "./providers/changedFilesProvider";
 import { CMD, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_FAVORITES, VIEW_CHANGED_FILES } from "./constants";
 import { registerScanCommands } from "./commands/scan";
-import { registerStageCommands, openNextPendingFile } from "./commands/stage";
+import { registerStageCommands, openNextPendingFile, openFileDiff } from "./commands/stage";
 import { registerCommitCommands } from "./commands/commit";
 import { registerPushCommands } from "./commands/push";
 import { registerPullCommands } from "./commands/pull";
@@ -178,6 +178,100 @@ export function activate(context: vscode.ExtensionContext): void {
       // Use viewDiff to switch terminal + open diff, but the MRU list
       // is already rotated by cycleNextRepo so it won't re-sort.
       await vscode.commands.executeCommand(CMD.viewDiff, { path: nextPath });
+    })
+  );
+
+  // Close active repo from recent list
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.closeActiveRepo, async () => {
+      const repoPath = repoManager.selectedRepo;
+      if (!repoPath) return;
+      await closeEditorsForRepo(repoPath);
+      repoManager.closeRecentRepo(repoPath);
+      // Switch to next repo if one exists
+      const next = repoManager.selectedRepo;
+      if (next) {
+        await vscode.commands.executeCommand(CMD.viewDiff, { path: next });
+      }
+    })
+  );
+
+  // Pick which active repo to close
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.closePickedRepo, async () => {
+      const recent = repoManager.recentRepoPaths;
+      if (recent.length === 0) {
+        vscode.window.showInformationMessage("Diffchestrator: No active repos.");
+        return;
+      }
+      const items = recent.map((p) => ({
+        label: `$(repo) ${path.basename(p)}`,
+        description: p === repoManager.selectedRepo ? "● active" : "",
+        _repoPath: p,
+      }));
+      const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: "Close which active repo?",
+      });
+      if (selected) {
+        await closeEditorsForRepo(selected._repoPath);
+        repoManager.closeRecentRepo(selected._repoPath);
+        const next = repoManager.selectedRepo;
+        if (next) {
+          await vscode.commands.executeCommand(CMD.viewDiff, { path: next });
+        }
+      }
+    })
+  );
+
+  // Close all active repos
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.closeAllActiveRepos, async () => {
+      const recent = [...repoManager.recentRepoPaths];
+      for (const p of recent) {
+        await closeEditorsForRepo(p);
+      }
+      repoManager.clearAllRecentRepos();
+      await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+    })
+  );
+
+  // Navigate changed files without staging
+  const navGit = new GitExecutor();
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.nextChangedFile, async () => {
+      const repoPath = repoManager.selectedRepo;
+      if (!repoPath) return;
+      const status = await navGit.status(repoPath);
+      const allFiles = [...status.unstaged, ...status.untracked, ...status.staged];
+      if (allFiles.length === 0) return;
+
+      // Find current file in the list
+      const editor = vscode.window.activeTextEditor;
+      const currentPath = editor?.document.uri.fsPath;
+      const currentRel = currentPath ? path.relative(repoPath, currentPath) : "";
+      const currentIdx = allFiles.findIndex((f) => f.path === currentRel);
+      const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % allFiles.length : 0;
+      const next = allFiles[nextIdx];
+
+      await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+      await openFileDiff(repoPath, next);
+    }),
+    vscode.commands.registerCommand(CMD.prevChangedFile, async () => {
+      const repoPath = repoManager.selectedRepo;
+      if (!repoPath) return;
+      const status = await navGit.status(repoPath);
+      const allFiles = [...status.unstaged, ...status.untracked, ...status.staged];
+      if (allFiles.length === 0) return;
+
+      const editor = vscode.window.activeTextEditor;
+      const currentPath = editor?.document.uri.fsPath;
+      const currentRel = currentPath ? path.relative(repoPath, currentPath) : "";
+      const currentIdx = allFiles.findIndex((f) => f.path === currentRel);
+      const prevIdx = currentIdx > 0 ? currentIdx - 1 : allFiles.length - 1;
+      const prev = allFiles[prevIdx];
+
+      await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+      await openFileDiff(repoPath, prev);
     })
   );
 

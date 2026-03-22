@@ -22,7 +22,7 @@ function resolveFileItem(item: any): { repoPath: string; filePath: string } | un
  * Open the diff (or plain file) for a given FileChange — same logic as
  * ChangedFilesProvider so the review experience is consistent.
  */
-async function openFileDiff(repoPath: string, fc: FileChange): Promise<void> {
+export async function openFileDiff(repoPath: string, fc: FileChange): Promise<void> {
   const fileName = path.basename(fc.path);
 
   if (fc.status === FileStatus.Untracked) {

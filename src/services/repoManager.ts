@@ -165,6 +165,30 @@ export class RepoManager implements vscode.Disposable {
     }
   }
 
+  /**
+   * Remove a repo from the recent list. If it was the active repo,
+   * select the next one or clear selection.
+   */
+  closeRecentRepo(repoPath: string): void {
+    this._recentRepoPaths = this._recentRepoPaths.filter((p) => p !== repoPath);
+    if (this._selectedRepo === repoPath) {
+      if (this._recentRepoPaths.length > 0) {
+        this._selectedRepo = this._recentRepoPaths[0];
+      } else {
+        this._selectedRepo = undefined;
+        vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, false);
+      }
+    }
+    this._onDidChangeSelection.fire();
+  }
+
+  clearAllRecentRepos(): void {
+    this._recentRepoPaths = [];
+    this._selectedRepo = undefined;
+    vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, false);
+    this._onDidChangeSelection.fire();
+  }
+
   selectRepo(repoPath: string): void {
     this._selectedRepo = repoPath;
     // Track recent repos (MRU order, capped at 10)
