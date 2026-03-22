@@ -211,32 +211,32 @@ export function activate(context: vscode.ExtensionContext): void {
     return repoManager.selectedRepo;
   }
 
+  // Check if a URI belongs to a repo (by file path or git-show query)
+  function uriBelongsToRepo(uri: vscode.Uri, repoPath: string): boolean {
+    if (uri.scheme === "file" && uri.fsPath.startsWith(repoPath)) return true;
+    if (uri.scheme === "git-show") {
+      try {
+        const params = JSON.parse(uri.query);
+        if (params.repoPath === repoPath) return true;
+      } catch { /* ignore */ }
+    }
+    return false;
+  }
+
   // Close editors that belong to a specific repo path
   async function closeEditorsForRepo(repoPath: string): Promise<void> {
     for (const group of vscode.window.tabGroups.all) {
       for (const tab of group.tabs) {
         let belongsToRepo = false;
-        const input = tab.input;
-        if (input instanceof vscode.TabInputText) {
-          belongsToRepo = input.uri.scheme === "file" && input.uri.fsPath.startsWith(repoPath);
-          if (!belongsToRepo && input.uri.scheme === "git-show") {
-            try {
-              const params = JSON.parse(input.uri.query);
-              belongsToRepo = params.repoPath === repoPath;
-            } catch { /* ignore */ }
-          }
-        } else if (input instanceof vscode.TabInputDiff) {
-          const orig = input.original;
-          const mod = input.modified;
+        const input = tab.input as any;
+        if (input?.uri) {
+          // TabInputText or TabInputNotebook — has a single uri
+          belongsToRepo = uriBelongsToRepo(input.uri, repoPath);
+        } else if (input?.original && input?.modified) {
+          // TabInputDiff — has original + modified URIs
           belongsToRepo =
-            (orig.scheme === "file" && orig.fsPath.startsWith(repoPath)) ||
-            (mod.scheme === "file" && mod.fsPath.startsWith(repoPath));
-          if (!belongsToRepo) {
-            try {
-              const params = JSON.parse(orig.query || mod.query);
-              belongsToRepo = params.repoPath === repoPath;
-            } catch { /* ignore */ }
-          }
+            uriBelongsToRepo(input.original, repoPath) ||
+            uriBelongsToRepo(input.modified, repoPath);
         }
         if (belongsToRepo) {
           await vscode.window.tabGroups.close(tab);
