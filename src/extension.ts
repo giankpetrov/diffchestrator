@@ -48,15 +48,6 @@ export function activate(context: vscode.ExtensionContext): void {
       } else if (uri.scheme === "git-show") {
         lastOpenFile.set(repoPath, uri);
       }
-    }),
-    // Clear remembered file when its tab is closed
-    vscode.workspace.onDidCloseTextDocument((doc) => {
-      const uri = doc.uri;
-      for (const [repo, remembered] of lastOpenFile) {
-        if (remembered.toString() === uri.toString()) {
-          lastOpenFile.delete(repo);
-        }
-      }
     })
   );
 
@@ -271,6 +262,8 @@ export function activate(context: vscode.ExtensionContext): void {
         // Close editors from the previous repo before switching
         if (previousRepoPath && previousRepoPath !== repoPath) {
           await closeEditorsForRepo(previousRepoPath);
+          // Clear remembered file since we just closed all its editors
+          lastOpenFile.delete(previousRepoPath);
         }
         previousRepoPath = repoPath;
 
@@ -279,25 +272,7 @@ export function activate(context: vscode.ExtensionContext): void {
         // Show the repo's terminal if one exists (preserves focus on editor)
         await showTerminalIfExists(repoPath);
 
-        // Restore last open file if we have one for this repo
-        const remembered = lastOpenFile.get(repoPath);
-        if (remembered) {
-          try {
-            if (remembered.scheme === "file") {
-              await vscode.window.showTextDocument(remembered, { preview: false });
-            } else {
-              // git-show URI (diff editor) — re-open the document
-              const doc = await vscode.workspace.openTextDocument(remembered);
-              await vscode.window.showTextDocument(doc, { preview: false });
-            }
-            return;
-          } catch {
-            // File may have been deleted — fall through to default behavior
-            lastOpenFile.delete(repoPath);
-          }
-        }
-
-        // No remembered file — auto-open first changed file in diff editor
+        // Priority: changed files first (review workflow), then remembered file
         try {
           const git = new GitExecutor();
           const status = await git.status(repoPath);
@@ -331,8 +306,24 @@ export function activate(context: vscode.ExtensionContext): void {
               );
             }
           } else {
-            // No changes — close stale diff from previous repo
-            await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+            // No changes — restore remembered file if we have one
+            const remembered = lastOpenFile.get(repoPath);
+            if (remembered) {
+              try {
+                if (remembered.scheme === "file") {
+                  await vscode.window.showTextDocument(remembered, { preview: false });
+                } else {
+                  const doc = await vscode.workspace.openTextDocument(remembered);
+                  await vscode.window.showTextDocument(doc, { preview: false });
+                }
+              } catch {
+                lastOpenFile.delete(repoPath);
+                await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+              }
+            } else {
+              // Nothing to show — close stale editor
+              await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+            }
           }
         } catch {
           // Non-critical — file list still works
