@@ -3,80 +3,89 @@ import * as path from "path";
 import type { RepoManager } from "../services/repoManager";
 import { CMD } from "../constants";
 
-/** Map of repo path → terminal, so we can reuse them */
+export type TerminalKind = "shell" | "claude" | "yolo";
+
+/** Map key: `${repoPath}::${kind}` */
 const repoTerminals = new Map<string, vscode.Terminal>();
+
+function key(repoPath: string, kind: TerminalKind): string {
+  return `${repoPath}::${kind}`;
+}
 
 // Clean up map when terminals close
 vscode.window.onDidCloseTerminal((t) => {
-  for (const [key, term] of repoTerminals) {
+  for (const [k, term] of repoTerminals) {
     if (term === t) {
-      repoTerminals.delete(key);
+      repoTerminals.delete(k);
       break;
     }
   }
 });
 
-/**
- * Get or create a terminal for a repo path.
- * If one exists and is still open, reuse it.
- */
-export function getOrCreateTerminal(repoPath: string): vscode.Terminal {
-  const existing = repoTerminals.get(repoPath);
-  // Check if terminal is still alive (not disposed)
+function getAlive(repoPath: string, kind: TerminalKind): vscode.Terminal | undefined {
+  const existing = repoTerminals.get(key(repoPath, kind));
   if (existing && vscode.window.terminals.includes(existing)) {
     return existing;
   }
+  // Clean stale entry
+  repoTerminals.delete(key(repoPath, kind));
+  return undefined;
+}
+
+/**
+ * Register a terminal in the tracking map.
+ */
+export function registerRepoTerminal(repoPath: string, kind: TerminalKind, terminal: vscode.Terminal): void {
+  repoTerminals.set(key(repoPath, kind), terminal);
+}
+
+/**
+ * Get an existing alive terminal for a repo + kind, or undefined.
+ */
+export function getRepoTerminal(repoPath: string, kind: TerminalKind): vscode.Terminal | undefined {
+  return getAlive(repoPath, kind);
+}
+
+/**
+ * Get or create a shell terminal for a repo path.
+ */
+export function getOrCreateTerminal(repoPath: string): vscode.Terminal {
+  const existing = getAlive(repoPath, "shell");
+  if (existing) return existing;
 
   const name = path.basename(repoPath);
   const terminal = vscode.window.createTerminal({
     name: `DC: ${name}`,
     cwd: repoPath,
   });
-  repoTerminals.set(repoPath, terminal);
+  repoTerminals.set(key(repoPath, "shell"), terminal);
   return terminal;
 }
 
 /**
- * Register an externally-created terminal (e.g. Claude Code) in the shared map.
- */
-export function registerRepoTerminal(repoPath: string, terminal: vscode.Terminal): void {
-  repoTerminals.set(repoPath, terminal);
-}
-
-/**
- * Get the tracked terminal for a repo if it's still alive, or undefined.
- */
-export function getRepoTerminal(repoPath: string): vscode.Terminal | undefined {
-  const existing = repoTerminals.get(repoPath);
-  if (existing && vscode.window.terminals.includes(existing)) {
-    return existing;
-  }
-  return undefined;
-}
-
-/**
- * Check if a repo has an active (alive) terminal.
+ * Check if a repo has any active terminal (any kind).
  */
 export function hasActiveTerminal(repoPath: string): boolean {
-  const existing = repoTerminals.get(repoPath);
-  return !!existing && vscode.window.terminals.includes(existing);
+  const kinds: TerminalKind[] = ["claude", "yolo", "shell"];
+  return kinds.some((k) => !!getAlive(repoPath, k));
 }
 
 /**
- * Switch to the terminal for a repo if one exists.
- * Shows the terminal panel with the correct tab active, then returns
- * focus to the editor so the user keeps their context.
+ * Switch to the best terminal for a repo (claude > yolo > shell).
+ * Returns focus to editor after switching.
  */
 export async function showTerminalIfExists(repoPath: string): Promise<boolean> {
-  const existing = repoTerminals.get(repoPath);
-  if (existing && vscode.window.terminals.includes(existing)) {
-    // show(false) = take focus, which forces the terminal panel to switch tabs
-    existing.show(false);
-    // Return focus to the editor after a tick so the terminal tab switch sticks
-    setTimeout(() => {
-      vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
-    }, 100);
-    return true;
+  // Priority: claude > yolo > shell
+  const kinds: TerminalKind[] = ["claude", "yolo", "shell"];
+  for (const kind of kinds) {
+    const existing = getAlive(repoPath, kind);
+    if (existing) {
+      existing.show(false);
+      setTimeout(() => {
+        vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+      }, 100);
+      return true;
+    }
   }
   return false;
 }
@@ -85,9 +94,7 @@ export function registerTerminalCommand(
   context: vscode.ExtensionContext,
   repoManager: RepoManager
 ): void {
-  void repoManager;
-
-  // Open terminal
+  // Open shell terminal
   context.subscriptions.push(
     vscode.commands.registerCommand(
       CMD.openTerminal,
@@ -103,7 +110,7 @@ export function registerTerminalCommand(
     )
   );
 
-  // Yolo — open terminal with claude sandbox yolo alias
+  // Yolo — reuse existing yolo terminal or create new one
   context.subscriptions.push(
     vscode.commands.registerCommand(
       CMD.yolo,
@@ -113,12 +120,19 @@ export function registerTerminalCommand(
           vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
           return;
         }
+
+        const existing = getAlive(targetPath, "yolo");
+        if (existing) {
+          existing.show();
+          return;
+        }
+
         const name = path.basename(targetPath);
-        // Always create a new terminal for yolo (sandbox session)
         const terminal = vscode.window.createTerminal({
           name: `YOLO: ${name}`,
           cwd: targetPath,
         });
+        repoTerminals.set(key(targetPath, "yolo"), terminal);
         terminal.show();
         terminal.sendText("yolo");
       }

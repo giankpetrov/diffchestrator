@@ -1,16 +1,27 @@
 import * as vscode from "vscode";
-import * as path from "path";
 import type { RepoManager } from "../services/repoManager";
 import type { RepoSummary } from "../types";
 import { CMD } from "../constants";
-import { hasActiveTerminal, showTerminalIfExists } from "../commands/terminal";
+import { getRepoTerminal } from "../commands/terminal";
+import type { TerminalKind } from "../commands/terminal";
 
 type Role = "active" | "selected" | "recent";
 
 interface ActiveRepoNode {
   repo: RepoSummary;
   role: Role;
-  hasTerminal: boolean;
+  terminalKinds: TerminalKind[];
+}
+
+const KIND_LABELS: Record<TerminalKind, string> = {
+  claude: "Claude",
+  yolo: "Yolo",
+  shell: "Shell",
+};
+
+function activeKinds(repoPath: string): TerminalKind[] {
+  const kinds: TerminalKind[] = ["claude", "yolo", "shell"];
+  return kinds.filter((k) => !!getRepoTerminal(repoPath, k));
 }
 
 export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNode> {
@@ -34,18 +45,18 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
     if (r.branch) parts.push(r.branch);
     if (r.totalChanges > 0) parts.push(`${r.totalChanges} changes`);
 
-    // Terminal indicator
-    const termIcon = element.hasTerminal ? "$(terminal) " : "";
+    // Terminal indicator: show which sessions are active
+    const termLabels = element.terminalKinds.map((k) => KIND_LABELS[k]);
+    const termTag = termLabels.length > 0 ? `$(terminal) ${termLabels.join("+")} ` : "";
 
     if (element.role === "active") {
-      item.description = `${termIcon}● ${parts.join(" · ")}`;
+      item.description = `${termTag}● ${parts.join(" · ")}`;
       item.iconPath = new vscode.ThemeIcon("repo", new vscode.ThemeColor("charts.blue"));
     } else if (element.role === "selected") {
-      item.description = `${termIcon}${parts.join(" · ")}`;
+      item.description = `${termTag}${parts.join(" · ")}`;
       item.iconPath = new vscode.ThemeIcon("check", new vscode.ThemeColor("charts.purple"));
     } else {
-      // Recent
-      item.description = `${termIcon}${parts.join(" · ")}`;
+      item.description = `${termTag}${parts.join(" · ")}`;
       item.iconPath = new vscode.ThemeIcon("history", new vscode.ThemeColor("foreground"));
     }
 
@@ -60,10 +71,9 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
     if (element.role === "active") lines.push("● Active repo");
     else if (element.role === "selected") lines.push("✓ Multi-selected");
     else lines.push("Recently opened");
-    if (element.hasTerminal) lines.push("Terminal active");
+    if (termLabels.length > 0) lines.push(`Terminals: ${termLabels.join(", ")}`);
     item.tooltip = lines.join("\n");
 
-    // Click: select repo + show its terminal if one exists
     item.command = {
       command: CMD.viewDiff,
       title: "View Diff",
@@ -80,31 +90,28 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
     const recentPaths = this.repoManager.recentRepoPaths;
     const seen = new Set<string>();
 
-    // Active repo first
     if (activePath) {
       const repo = this.repoManager.getRepo(activePath);
       if (repo) {
-        nodes.push({ repo, role: "active", hasTerminal: hasActiveTerminal(activePath) });
+        nodes.push({ repo, role: "active", terminalKinds: activeKinds(activePath) });
         seen.add(activePath);
       }
     }
 
-    // Multi-selected repos
     for (const p of multiPaths) {
       if (seen.has(p)) continue;
       const repo = this.repoManager.getRepo(p);
       if (repo) {
-        nodes.push({ repo, role: "selected", hasTerminal: hasActiveTerminal(p) });
+        nodes.push({ repo, role: "selected", terminalKinds: activeKinds(p) });
         seen.add(p);
       }
     }
 
-    // Recent repos (not already shown)
     for (const p of recentPaths) {
       if (seen.has(p)) continue;
       const repo = this.repoManager.getRepo(p);
       if (repo) {
-        nodes.push({ repo, role: "recent", hasTerminal: hasActiveTerminal(p) });
+        nodes.push({ repo, role: "recent", terminalKinds: activeKinds(p) });
         seen.add(p);
       }
     }

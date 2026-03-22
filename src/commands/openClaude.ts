@@ -28,8 +28,8 @@ export function registerClaudeCommands(
           terminal.show();
           terminal.sendText(`claude ${addDirArgs}`);
         } else if (singlePath) {
-          // Single repo mode — reuse existing terminal if alive
-          const existing = getRepoTerminal(singlePath);
+          // Reuse existing Claude terminal if alive
+          const existing = getRepoTerminal(singlePath, "claude");
           if (existing) {
             existing.show();
             return;
@@ -40,7 +40,7 @@ export function registerClaudeCommands(
             name: `Claude: ${repoName}`,
             cwd: singlePath,
           });
-          registerRepoTerminal(singlePath, terminal);
+          registerRepoTerminal(singlePath, "claude", terminal);
           terminal.show();
           terminal.sendText("claude");
         } else {
