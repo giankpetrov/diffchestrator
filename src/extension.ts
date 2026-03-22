@@ -26,6 +26,7 @@ import { StatusBarManager } from "./services/statusBar";
 import { InlineBlameService } from "./services/inlineBlame";
 import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 import { GitExecutor } from "./git/gitExecutor";
+import { showTerminalIfExists } from "./commands/terminal";
 import * as path from "path";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -191,6 +192,8 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         repoManager.selectRepo(repoPath);
         await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+        // Show the repo's terminal if one exists (preserves focus on editor)
+        showTerminalIfExists(repoPath);
 
         // Auto-open first changed file in diff editor
         try {

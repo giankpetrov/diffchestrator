@@ -8,6 +8,7 @@ export class RepoManager implements vscode.Disposable {
   private _repos = new Map<string, RepoSummary>();
   private _selectedRepo: string | undefined;
   private _selectedRepoPaths = new Set<string>();
+  private _recentRepoPaths: string[] = [];
   private _currentRoot: string | undefined;
   private _changedOnly: boolean;
   private _refreshTimer: ReturnType<typeof setInterval> | undefined;
@@ -41,6 +42,9 @@ export class RepoManager implements vscode.Disposable {
   }
   get selectedRepoPaths(): Set<string> {
     return this._selectedRepoPaths;
+  }
+  get recentRepoPaths(): readonly string[] {
+    return this._recentRepoPaths;
   }
   get currentRoot(): string | undefined {
     return this._currentRoot;
@@ -99,6 +103,11 @@ export class RepoManager implements vscode.Disposable {
 
   selectRepo(repoPath: string): void {
     this._selectedRepo = repoPath;
+    // Track recent repos (MRU order, capped at 10)
+    this._recentRepoPaths = [
+      repoPath,
+      ...this._recentRepoPaths.filter((p) => p !== repoPath),
+    ].slice(0, 10);
     vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, true);
     this._onDidChangeSelection.fire();
   }

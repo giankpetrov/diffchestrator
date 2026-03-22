@@ -36,6 +36,26 @@ export function getOrCreateTerminal(repoPath: string): vscode.Terminal {
   return terminal;
 }
 
+/**
+ * Check if a repo has an active (alive) terminal.
+ */
+export function hasActiveTerminal(repoPath: string): boolean {
+  const existing = repoTerminals.get(repoPath);
+  return !!existing && vscode.window.terminals.includes(existing);
+}
+
+/**
+ * Show the terminal for a repo if one exists, or return false.
+ */
+export function showTerminalIfExists(repoPath: string): boolean {
+  const existing = repoTerminals.get(repoPath);
+  if (existing && vscode.window.terminals.includes(existing)) {
+    existing.show(true); // preserveFocus = true
+    return true;
+  }
+  return false;
+}
+
 export function registerTerminalCommand(
   context: vscode.ExtensionContext,
   repoManager: RepoManager

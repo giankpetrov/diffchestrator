@@ -30,8 +30,7 @@
       "diffchestrator": [
         {
           "id": "diffchestrator.activeRepos",
-          "name": "Active Repos",
-          "when": "diffchestrator.hasSelectedRepo"
+          "name": "Active Repos"
         },
         {
           "id": "diffchestrator.changedFiles",
