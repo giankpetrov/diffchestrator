@@ -42,7 +42,7 @@ export function registerClaudeCommands(
           });
           registerRepoTerminal(singlePath, "claude", terminal);
           terminal.show();
-          terminal.sendText("claude");
+          terminal.sendText("claude -c");
         } else {
           vscode.window.showWarningMessage(
             "Diffchestrator: No repository selected. Select a repo first."
