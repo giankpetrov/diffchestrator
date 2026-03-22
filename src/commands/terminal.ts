@@ -45,12 +45,19 @@ export function hasActiveTerminal(repoPath: string): boolean {
 }
 
 /**
- * Show the terminal for a repo if one exists, or return false.
+ * Switch to the terminal for a repo if one exists.
+ * Shows the terminal panel with the correct tab active, then returns
+ * focus to the editor so the user keeps their context.
  */
-export function showTerminalIfExists(repoPath: string): boolean {
+export async function showTerminalIfExists(repoPath: string): Promise<boolean> {
   const existing = repoTerminals.get(repoPath);
   if (existing && vscode.window.terminals.includes(existing)) {
-    existing.show(true); // preserveFocus = true
+    // show(false) = take focus, which forces the terminal panel to switch tabs
+    existing.show(false);
+    // Return focus to the editor after a tick so the terminal tab switch sticks
+    setTimeout(() => {
+      vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+    }, 100);
     return true;
   }
   return false;
