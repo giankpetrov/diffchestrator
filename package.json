@@ -5,12 +5,39 @@
   "version": "0.20.7",
   "publisher": "Andrevops",
   "license": "MIT",
+  "icon": "resources/icons/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Andrevops/diffchestrator"
+  },
+  "bugs": {
+    "url": "https://github.com/Andrevops/diffchestrator/issues"
+  },
+  "homepage": "https://github.com/Andrevops/diffchestrator#readme",
+  "keywords": [
+    "git",
+    "multi-repo",
+    "claude",
+    "diff",
+    "monorepo"
+  ],
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": [
     "SCM Providers",
     "Other"
+  ],
+  "galleryBanner": {
+    "color": "#1a1a2e",
+    "theme": "dark"
+  },
+  "badges": [
+    {
+      "url": "https://img.shields.io/github/license/Andrevops/diffchestrator",
+      "href": "https://github.com/Andrevops/diffchestrator/blob/main/LICENSE",
+      "description": "License"
+    }
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
