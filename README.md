@@ -18,9 +18,14 @@ Claude Code works best when you can see what it changed, across every repo it to
 
 ### Active Repos & Workspace Switching
 - **Active Repos view** — sidebar section showing recent repos (MRU, up to 10) with live terminal status indicators
+- **Persisted across reloads** — active repos and selection survive VS Code restarts
 - **Cycle repos** — `Ctrl+D, Tab` cycles through all recent repos (like Alt+Tab but for repos), switching the changed files view, terminal, and diff editor in one keystroke
+- **Close active repos** — `Ctrl+D, Q` closes current, `Ctrl+D, Shift+Q` picks which to close, `Ctrl+D, Shift+Tab` closes all
 - **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Shell)
 - **Auto-switch terminal** — clicking a repo in Active Repos, Favorites, or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Shell)
+- **Terminal tab sync** — clicking a terminal tab (Claude, Yolo, shell) auto-selects the repo in the sidebar, opens its changed files, and adds it to Active Repos if not already there
+- **Auto-add on terminal open** — opening a terminal, Claude Code, or Yolo session for a repo automatically adds it to Active Repos
+- **Notifications** — notifies when Claude commits or modifies files in any repo, with "Show Terminal" and "View Changes" action buttons (changes notification debounced 15s to avoid mid-edit alerts)
 
 ### Repository Discovery
 - **Auto-scan** a root directory to discover all git repos (BFS, configurable depth)
@@ -42,9 +47,11 @@ Claude Code works best when you can see what it changed, across every repo it to
 
 ### Diff Viewing & Review Workflow
 - Click a changed file to open VS Code's **native diff editor** (split view with syntax highlighting)
+- **Navigate changed files** — `Ctrl+D, N` / `Shift+N` or ↑↓ buttons in editor title bar to browse files without staging
 - **Auto-advance on stage** — staging a file automatically opens the next pending file's diff, enabling a review-then-stage workflow
 - **Works from sidebar and editor title bar** — both stage buttons advance to the next file
 - **Auto-close stale diffs** — switching to a repo with no changes closes the previous repo's diff
+- **Context restore** — switching back to a repo reopens the last file you were viewing (changes take priority over remembered files)
 - **Multi-repo diff webview** — aggregated diffs across multiple selected repos with react-diff-view
 - Per-file stage/unstage controls in the diff view
 - **Inline blame** — GitLens-style current-line blame showing author, date, and commit message (`Ctrl+D, G` to toggle)
@@ -88,6 +95,11 @@ All shortcuts use **Ctrl+D** as a chord prefix — press `Ctrl+D`, release, then
 | Chord | Action |
 |-------|--------|
 | `Ctrl+D, Tab` | Cycle through recent active repos |
+| `Ctrl+D, Shift+Tab` | Close all active repos |
+| `Ctrl+D, Q` | Close current active repo |
+| `Ctrl+D, Shift+Q` | Pick which active repo to close |
+| `Ctrl+D, N` | Next changed file |
+| `Ctrl+D, Shift+N` | Previous changed file |
 | `Ctrl+D, C` | AI Commit (Claude) |
 | `Ctrl+D, L` | Open Claude Code (continues session) |
 | `Ctrl+D, Y` | Yolo (Claude Sandbox) |
@@ -127,6 +139,7 @@ Right-click a **changed file**:
 
 **Editor title bar** (top-right of diff editor):
 
+- Prev/Next Changed File (↑↓ buttons to browse without staging)
 - Stage This File / Unstage This File (with auto-advance to next file)
 
 **Changed Files view title**:
