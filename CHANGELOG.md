@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.20.x — Current
+## 0.20.5 — Current
 
 > Built for Claude Code — multi-repo Git orchestration as a companion to Anthropic's CLI for agentic coding.
 
@@ -86,11 +86,14 @@
 - Full context menu integration on repos and files
 - Auto-detect release script (`npm run release`) — reads conventional commits for semver bump
 
-### Performance (v0.13.6+)
+### Performance
+- Single shared GitExecutor instance across all commands (was 6 independent instances)
+- Unified 500ms TTL cache on `git status()` — all commands share cache hits
 - `refreshRepo` only fires events when data actually changes (~90% fewer tree rebuilds)
-- `shortStatus` parses branch + ahead/behind in one git call (was two separate calls)
-- 500ms TTL cache on `git status()` deduplicates concurrent calls
+- `shortStatus` parses branch + ahead/behind + HEAD oid in one git call (was two separate calls)
 - `refreshAll` batched to 5 concurrent repos (was unbounded)
 - `_refreshLastCommits` has 60s cooldown and runs in parallel batches
 - Focus regain resets the interval timer to prevent double-refresh
 - Selection change no longer rebuilds the tree — only re-renders visible items
+- Terminal state cached in Active Repos — only rescans on terminal open/close
+- `viewDiff` reuses shared `openFileDiff` instead of duplicating diff logic

@@ -84,6 +84,12 @@ Claude Code works best when you can see what it changed, across every repo it to
 - Falls back to polling at configurable interval (default 10s)
 - **Pauses when VS Code loses focus** — no wasted disk reads in the background; refreshes immediately on refocus
 
+### Performance
+- **Single shared git instance** — all commands share one GitExecutor with a 500ms TTL cache, eliminating redundant git process spawns
+- **Conditional event firing** — tree views only rebuild when data actually changes (~90% fewer rebuilds during idle polling)
+- **Batched concurrency** — `refreshAll` and `_refreshLastCommits` limited to 5 concurrent git processes
+- **Terminal state caching** — Active Repos only rescans terminals on open/close events
+
 ### Status Bar
 - **Left**: repo count + total changes (click to open sidebar)
 - **Right**: active repo name + branch + changes with prominent background (click to switch repo)
