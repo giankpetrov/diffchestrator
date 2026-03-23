@@ -78,6 +78,37 @@ function getAlive(repoPath: string, kind: TerminalKind): vscode.Terminal | undef
 }
 
 /**
+ * Find which repo path a terminal belongs to (by map lookup or name pattern).
+ */
+export function findRepoForTerminal(terminal: vscode.Terminal): string | undefined {
+  // Check tracked map first
+  for (const [k, t] of repoTerminals) {
+    if (t === terminal) {
+      return k.split("::")[0];
+    }
+  }
+  // Fallback: match terminal name against known patterns
+  const name = terminal.name;
+  const patterns: { regex: RegExp; extract: (m: RegExpMatchArray) => string }[] = [
+    { regex: /^Claude:\s*(.+)$/i, extract: (m) => m[1] },
+    { regex: /^YOLO:\s*(.+)$/i, extract: (m) => m[1] },
+    { regex: /^DC:\s*(.+)$/i, extract: (m) => m[1] },
+  ];
+  for (const { regex, extract } of patterns) {
+    const match = name.match(regex);
+    if (match) {
+      const repoName = extract(match);
+      // Find a repo path ending with this name
+      for (const k of repoTerminals.keys()) {
+        const rp = k.split("::")[0];
+        if (path.basename(rp) === repoName) return rp;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
  * Register a terminal in the tracking map.
  */
 export function registerRepoTerminal(repoPath: string, kind: TerminalKind, terminal: vscode.Terminal): void {

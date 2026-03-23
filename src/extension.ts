@@ -26,7 +26,7 @@ import { StatusBarManager } from "./services/statusBar";
 import { InlineBlameService } from "./services/inlineBlame";
 import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 import { GitExecutor } from "./git/gitExecutor";
-import { showTerminalIfExists } from "./commands/terminal";
+import { showTerminalIfExists, findRepoForTerminal } from "./commands/terminal";
 import * as path from "path";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -54,6 +54,17 @@ export function activate(context: vscode.ExtensionContext): void {
         lastOpenFile.set(repoPath, uri);
       } else if (uri.scheme === "git-show") {
         lastOpenFile.set(repoPath, uri);
+      }
+    })
+  );
+
+  // When user clicks a terminal tab, switch to that repo
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTerminal((terminal) => {
+      if (!terminal || switchingRepo) return;
+      const repoPath = findRepoForTerminal(terminal);
+      if (repoPath && repoPath !== repoManager.selectedRepo) {
+        repoManager.selectRepo(repoPath);
       }
     })
   );
