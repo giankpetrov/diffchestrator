@@ -375,6 +375,14 @@ export class GitExecutor {
     return result.stdout;
   }
 
+  async cleanFile(repoPath: string, file: string): Promise<void> {
+    this._validateFilePath(repoPath, file);
+    const result = await this._run(["clean", "-f", "--", file], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Clean file failed");
+    }
+  }
+
   async stashList(repoPath: string): Promise<{ index: number; message: string }[]> {
     const result = await this._run(["stash", "list"], repoPath);
     if (!result.stdout.trim()) return [];

@@ -487,12 +487,12 @@
         },
         {
           "command": "diffchestrator.discardFile",
-          "when": "viewItem == file-unstaged",
+          "when": "viewItem == file-unstaged || viewItem == file-untracked",
           "group": "inline@2"
         },
         {
           "command": "diffchestrator.discardFile",
-          "when": "viewItem == file-unstaged",
+          "when": "viewItem == file-unstaged || viewItem == file-untracked",
           "group": "1_file@1"
         }
       ]

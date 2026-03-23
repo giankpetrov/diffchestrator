@@ -3,11 +3,13 @@ import * as path from "path";
 import { GitExecutor } from "../git/gitExecutor";
 import type { RepoManager } from "../services/repoManager";
 import { CMD } from "../constants";
+import { FileStatus } from "../types";
 
-function resolveFileItem(item: any): { repoPath: string; filePath: string } | undefined {
+function resolveFileItem(item: any): { repoPath: string; filePath: string; status?: FileStatus } | undefined {
   const repoPath = item?.repoPath;
   const filePath = item?.fileChange?.path ?? item?.filePath;
-  if (repoPath && filePath) return { repoPath, filePath };
+  const status = item?.fileChange?.status as FileStatus | undefined;
+  if (repoPath && filePath) return { repoPath, filePath, status };
   return undefined;
 }
 
@@ -29,8 +31,12 @@ export function registerDiscardCommands(
         }
 
         const fileName = path.basename(resolved.filePath);
+        const isUntracked = resolved.status === FileStatus.Untracked;
+        const confirmMsg = isUntracked
+          ? `Delete untracked file "${fileName}"? This cannot be undone.`
+          : `Discard changes to "${fileName}"? This cannot be undone.`;
         const confirm = await vscode.window.showWarningMessage(
-          `Discard changes to "${fileName}"? This cannot be undone.`,
+          confirmMsg,
           { modal: true },
           "Yes"
         );
@@ -38,7 +44,11 @@ export function registerDiscardCommands(
         if (confirm !== "Yes") return;
 
         try {
-          await git.checkoutFile(resolved.repoPath, resolved.filePath);
+          if (isUntracked) {
+            await git.cleanFile(resolved.repoPath, resolved.filePath);
+          } else {
+            await git.checkoutFile(resolved.repoPath, resolved.filePath);
+          }
           await repoManager.refreshRepo(resolved.repoPath);
           vscode.window.showInformationMessage(
             `Diffchestrator: Discarded changes to ${fileName}`
