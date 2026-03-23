@@ -81,6 +81,12 @@ function getAlive(repoPath: string, kind: TerminalKind): vscode.Terminal | undef
  * Find which repo path a terminal belongs to.
  * Pass allRepoPaths (from repoManager.repos) so we can match terminals
  * that aren't in the tracking map yet.
+ *
+ * Matching strategy:
+ * 1. Check the tracking map (exact match by terminal object)
+ * 2. Check if the terminal name contains any scanned repo's basename
+ *    (handles any naming: "Claude: repo", "YOLO: repo", "node repo", etc.)
+ *    Longest basename match wins to avoid "foo" matching "foo-bar"
  */
 export function findRepoForTerminal(terminal: vscode.Terminal, allRepoPaths: string[]): string | undefined {
   // Check tracked map first
@@ -89,30 +95,27 @@ export function findRepoForTerminal(terminal: vscode.Terminal, allRepoPaths: str
       return k.split("::")[0];
     }
   }
-  // Fallback: extract repo name from terminal name and match against all known repos
+
+  // Fallback: find the repo whose basename appears in the terminal name.
+  // Sort by basename length descending so "diffchestrator-vscode" matches
+  // before "diffchestrator".
   const name = terminal.name;
-  const patterns: RegExp[] = [
-    /^Claude:\s*(.+)$/i,
-    /^YOLO:\s*(.+)$/i,
-    /^DC:\s*(.+)$/i,
-    /^Claude Code\s*-\s*(.+)$/i,
-  ];
-  for (const regex of patterns) {
-    const match = name.match(regex);
-    if (match) {
-      const repoName = match[1].trim();
-      for (const rp of allRepoPaths) {
-        if (path.basename(rp) === repoName) {
-          // Adopt the terminal into the tracking map
-          const kind: TerminalKind =
-            /^Claude/i.test(name) ? "claude" :
-            /^YOLO/i.test(name) ? "yolo" : "shell";
-          repoTerminals.set(key(rp, kind), terminal);
-          return rp;
-        }
-      }
+  const sorted = [...allRepoPaths].sort(
+    (a, b) => path.basename(b).length - path.basename(a).length
+  );
+
+  for (const rp of sorted) {
+    const repoName = path.basename(rp);
+    if (name.includes(repoName)) {
+      // Adopt into tracking map
+      const kind: TerminalKind =
+        /claude/i.test(name) ? "claude" :
+        /yolo/i.test(name) ? "yolo" : "shell";
+      repoTerminals.set(key(rp, kind), terminal);
+      return rp;
     }
   }
+
   return undefined;
 }
 
