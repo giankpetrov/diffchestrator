@@ -141,6 +141,9 @@ export function activate(context: vscode.ExtensionContext): void {
       : `${repos.length} repos`;
     repoTreeView.description = rootName ? `${rootName} — ${countLabel}` : countLabel;
 
+    // Active Repos view: show root name
+    activeReposView.description = rootName || undefined;
+
     // Activity bar badge: total changes across all repos
     repoTreeView.badge = totalChanges > 0
       ? { value: totalChanges, tooltip: `${totalChanges} total changes` }
