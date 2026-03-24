@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.39.0
+
+### Features
+- show tag indicators on repos and active filter in view title
+
 ## 0.38.0
 
 ### Features
