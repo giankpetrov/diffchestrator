@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.31.3
+
+### Bug Fixes
+- refresh stale diff viewer after CLI commits
+
 ## 0.31.2
 
 ### Bug Fixes
