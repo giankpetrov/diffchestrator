@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.35.1
+
+### Bug Fixes
+- remove "View Changes" from commit notifications
+
 ## 0.35.0
 
 ### Features
