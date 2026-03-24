@@ -2,6 +2,14 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.31.0
+
+### Features
+- 8 new features — fetch all, commit prefixes, health badges, and more
+
+### Other
+- remove unused clearSelectedRepo method
+
 ## 0.30.0
 
 ### Features
