@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.37.0
+
+### Features
+- add Ctrl+D, K shortcut for keyboard cheatsheet
+
 ## 0.36.0
 
 ### Features
