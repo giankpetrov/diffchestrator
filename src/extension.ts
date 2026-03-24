@@ -753,12 +753,14 @@ export function activate(context: vscode.ExtensionContext): void {
   const workspaceAutoScan = new WorkspaceAutoScan(repoManager, fileWatcher);
   context.subscriptions.push(workspaceAutoScan);
 
-  // Auto-scan on startup
+  // Auto-scan on startup — resume last root if available, otherwise use first configured root
   const config = vscode.workspace.getConfiguration("diffchestrator");
   if (config.get<boolean>("scanOnStartup", true)) {
     const roots = config.get<string[]>("scanRoots", []);
-    if (roots.length > 0) {
-      repoManager.scan(roots[0]).then(() => {
+    const lastRoot = repoManager.currentRoot;
+    const startupRoot = lastRoot && roots.includes(lastRoot) ? lastRoot : roots[0];
+    if (startupRoot) {
+      repoManager.scan(startupRoot).then(() => {
         fileWatcher.watchAll();
       });
     }

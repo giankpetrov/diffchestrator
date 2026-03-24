@@ -7,6 +7,7 @@ import { CTX } from "../constants";
 
 const STATE_RECENT_REPOS = "diffchestrator.recentRepoPaths";
 const STATE_SELECTED_REPO = "diffchestrator.selectedRepo";
+const STATE_CURRENT_ROOT = "diffchestrator.currentRoot";
 
 export class RepoManager implements vscode.Disposable {
   private _repos = new Map<string, RepoSummary>();
@@ -50,10 +51,11 @@ export class RepoManager implements vscode.Disposable {
     this._changedOnly = config.get<boolean>("changedOnlyDefault", true);
     vscode.commands.executeCommand("setContext", CTX.changedOnly, this._changedOnly);
 
-    // Restore persisted recent repos and selection
+    // Restore persisted state
     if (state) {
       this._recentRepoPaths = state.get<string[]>(STATE_RECENT_REPOS, []);
       this._selectedRepo = state.get<string | undefined>(STATE_SELECTED_REPO, undefined);
+      this._currentRoot = state.get<string | undefined>(STATE_CURRENT_ROOT, undefined);
       if (this._selectedRepo) {
         vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, true);
       }
@@ -67,6 +69,7 @@ export class RepoManager implements vscode.Disposable {
     if (!this._state) return;
     this._state.update(STATE_RECENT_REPOS, this._recentRepoPaths);
     this._state.update(STATE_SELECTED_REPO, this._selectedRepo);
+    this._state.update(STATE_CURRENT_ROOT, this._currentRoot);
   }
 
   get selectedRepo(): string | undefined {
