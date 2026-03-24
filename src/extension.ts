@@ -323,6 +323,19 @@ export function activate(context: vscode.ExtensionContext): void {
       const config = vscode.workspace.getConfiguration("diffchestrator");
       const current = config.get<string[]>("scanRoots", []);
       await config.update("scanRoots", current.filter((r) => r !== rootPath), vscode.ConfigurationTarget.Global);
+    }),
+    vscode.commands.registerCommand(CMD.openRootTerminal, () => {
+      const root = repoManager.currentRoot;
+      if (!root) {
+        vscode.window.showWarningMessage("Diffchestrator: No scan root selected.");
+        return;
+      }
+      const name = path.basename(root);
+      const terminal = vscode.window.createTerminal({
+        name: `Root: ${name}`,
+        cwd: root,
+      });
+      terminal.show();
     })
   );
 

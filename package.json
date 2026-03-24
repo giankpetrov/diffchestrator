@@ -358,6 +358,12 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "diffchestrator.openRootTerminal",
+        "title": "Open Terminal at Root",
+        "category": "Diffchestrator",
+        "icon": "$(terminal)"
+      },
+      {
         "command": "diffchestrator.switchRoot",
         "title": "Switch Scan Root",
         "category": "Diffchestrator",
@@ -443,9 +449,14 @@
           "group": "navigation@4"
         },
         {
-          "command": "diffchestrator.switchRoot",
+          "command": "diffchestrator.openRootTerminal",
           "when": "view == diffchestrator.repos",
           "group": "navigation@5"
+        },
+        {
+          "command": "diffchestrator.switchRoot",
+          "when": "view == diffchestrator.repos",
+          "group": "navigation@6"
         },
         {
           "command": "diffchestrator.stageAll",
@@ -601,6 +612,11 @@
         "command": "diffchestrator.openTerminal",
         "key": "ctrl+d t",
         "mac": "cmd+d t"
+      },
+      {
+        "command": "diffchestrator.openRootTerminal",
+        "key": "ctrl+d shift+t",
+        "mac": "cmd+d shift+t"
       },
       {
         "command": "diffchestrator.openClaudeCode",

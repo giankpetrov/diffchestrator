@@ -56,6 +56,7 @@ export const CMD = {
   fetchAll: "diffchestrator.fetchAll",
   bulkPull: "diffchestrator.bulkPull",
   claudeReviewAll: "diffchestrator.claudeReviewAll",
+  openRootTerminal: "diffchestrator.openRootTerminal",
 } as const;
 
 export const CONFIG = {
