@@ -261,15 +261,37 @@ export class RepoManager implements vscode.Disposable {
   }
 
   /**
-   * Rotate the recent list: move current (index 0) to the end,
-   * select the new front. This cycles through all recent repos
-   * without the MRU re-sort that selectRepo does.
+   * Rotate through all visible repos (favorites + recent, deduplicated,
+   * filtered by current root). Cycles without MRU re-sort.
    */
   cycleNextRepo(): string | undefined {
-    if (this._recentRepoPaths.length < 2) return undefined;
-    const rotated = this._recentRepoPaths.shift()!;
-    this._recentRepoPaths.push(rotated);
-    this._selectedRepo = this._recentRepoPaths[0];
+    // Build the same ordered list the Active Repos view shows
+    const config = vscode.workspace.getConfiguration("diffchestrator");
+    const favorites = config.get<string[]>("favorites", []);
+    const root = this._currentRoot;
+
+    const cyclePaths: string[] = [];
+    const seen = new Set<string>();
+    const isUnderRoot = (p: string) => !root || p.startsWith(root + path.sep);
+
+    for (const p of favorites) {
+      if (isUnderRoot(p) && !seen.has(p)) {
+        cyclePaths.push(p);
+        seen.add(p);
+      }
+    }
+    for (const p of this._recentRepoPaths) {
+      if (isUnderRoot(p) && !seen.has(p) && this._repos.has(p)) {
+        cyclePaths.push(p);
+        seen.add(p);
+      }
+    }
+
+    if (cyclePaths.length < 2) return undefined;
+
+    const currentIdx = cyclePaths.indexOf(this._selectedRepo ?? "");
+    const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % cyclePaths.length : 0;
+    this._selectedRepo = cyclePaths[nextIdx];
     vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, true);
     this._persistState();
     this._onDidChangeSelection.fire();

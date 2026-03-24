@@ -646,6 +646,11 @@
         "command": "diffchestrator.prevChangedFile",
         "key": "ctrl+d shift+n",
         "mac": "cmd+d shift+n"
+      },
+      {
+        "command": "diffchestrator.switchRoot",
+        "key": "ctrl+d shift+s",
+        "mac": "cmd+d shift+s"
       }
     ],
     "configuration": {
