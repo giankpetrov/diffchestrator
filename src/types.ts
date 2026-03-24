@@ -46,6 +46,7 @@ export interface RepoSummary {
   ahead: number;
   behind: number;
   headOid: string;
+  stashCount: number;
 }
 
 export interface CommitEntry {

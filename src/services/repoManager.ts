@@ -131,12 +131,18 @@ export class RepoManager implements vscode.Disposable {
 
     // Phase 2: Fetch git metadata in background, update tree as batches complete
     const BATCH = 10;
+    const fetchOnScan = config.get<boolean>("fetchOnScan", false);
     await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Window, title: "Diffchestrator: Scanning repos" },
+      { location: vscode.ProgressLocation.Window, title: `Diffchestrator: Scanning repos${fetchOnScan ? " + fetching" : ""}` },
       async (progress) => {
         for (let i = 0; i < repos.length; i += BATCH) {
           progress.report({ message: `${Math.min(i + BATCH, repos.length)}/${repos.length}` });
-          await Promise.all(repos.slice(i, i + BATCH).map((r) => scanner.fetchMetadata(r)));
+          await Promise.all(repos.slice(i, i + BATCH).map(async (r) => {
+            await scanner.fetchMetadata(r);
+            if (fetchOnScan) {
+              try { await this._git.fetch(r.path); } catch { /* ignore fetch failures */ }
+            }
+          }));
           this._fireRepoChangeCoalesced();
         }
       }

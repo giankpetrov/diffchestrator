@@ -340,6 +340,24 @@
         "icon": "$(eye)"
       },
       {
+        "command": "diffchestrator.fetchAll",
+        "title": "Fetch All Repos",
+        "category": "Diffchestrator",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "diffchestrator.bulkPull",
+        "title": "Pull Behind Repos",
+        "category": "Diffchestrator",
+        "icon": "$(repo-pull)"
+      },
+      {
+        "command": "diffchestrator.claudeReviewAll",
+        "title": "Claude Review All Changes",
+        "category": "Diffchestrator",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "diffchestrator.switchRoot",
         "title": "Switch Scan Root",
         "category": "Diffchestrator",
@@ -420,9 +438,14 @@
           "group": "navigation@3"
         },
         {
-          "command": "diffchestrator.switchRoot",
+          "command": "diffchestrator.fetchAll",
           "when": "view == diffchestrator.repos",
           "group": "navigation@4"
+        },
+        {
+          "command": "diffchestrator.switchRoot",
+          "when": "view == diffchestrator.repos",
+          "group": "navigation@5"
         },
         {
           "command": "diffchestrator.stageAll",
@@ -723,6 +746,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show favorites in the Active Repos view"
+        },
+        "diffchestrator.fetchOnScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically git fetch during scan to show accurate ahead/behind counts"
         },
         "diffchestrator.claudePermissionMode": {
           "type": "string",

@@ -61,6 +61,7 @@ export class Scanner extends EventEmitter {
             ahead: 0,
             behind: 0,
             headOid: "",
+            stashCount: 0,
           });
           continue;
         }
@@ -94,11 +95,12 @@ export class Scanner extends EventEmitter {
    */
   async fetchMetadata(repo: RepoSummary): Promise<void> {
     try {
-      const [remoteUrl, counts] = await Promise.all([
+      const [remoteUrl, counts, stashes] = await Promise.all([
         this.git.getRemoteUrl(repo.path).catch(() => undefined),
         this.git
           .shortStatus(repo.path)
           .catch(() => ({ staged: 0, unstaged: 0, untracked: 0, branch: "HEAD", ahead: 0, behind: 0, headOid: "" })),
+        this.git.stashCount(repo.path).catch(() => 0),
       ]);
       repo.branch = counts.branch;
       repo.remoteUrl = remoteUrl;
@@ -109,6 +111,7 @@ export class Scanner extends EventEmitter {
       repo.ahead = counts.ahead;
       repo.behind = counts.behind;
       repo.headOid = counts.headOid;
+      repo.stashCount = stashes;
     } catch {
       /* ignore — skeleton data stays */
     }

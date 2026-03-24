@@ -60,6 +60,7 @@ export class ChangedFilesProvider implements vscode.TreeDataProvider<TreeElement
       vscode.TreeItemCollapsibleState.None
     );
     item.description = dirName !== "." ? dirName : undefined;
+    // Diff stats will be set asynchronously via resolveTreeItem
     item.tooltip = `${fc.path} (${fc.changeType})`;
     item.iconPath = this._fileIcon(fc.changeType);
 
@@ -172,6 +173,24 @@ export class ChangedFilesProvider implements vscode.TreeDataProvider<TreeElement
     } catch {
       return [];
     }
+  }
+
+  async resolveTreeItem(item: vscode.TreeItem, element: TreeElement): Promise<vscode.TreeItem> {
+    if (element.type !== "file") return item;
+    const fc = element.fileChange;
+    if (fc.status === FileStatus.Untracked) return item;
+    try {
+      const staged = fc.status === FileStatus.Staged;
+      const stats = await this.repoManager.git.diffStatFile(element.repoPath, fc.path, staged);
+      if (stats.additions > 0 || stats.deletions > 0) {
+        const statStr = `+${stats.additions} -${stats.deletions}`;
+        item.tooltip = `${fc.path} (${fc.changeType}) ${statStr}`;
+        const dirName = path.dirname(fc.path);
+        const dir = dirName !== "." ? `${dirName} ` : "";
+        item.description = `${dir}${statStr}`;
+      }
+    } catch { /* ignore */ }
+    return item;
   }
 
   private _sectionIcon(status: FileStatus): vscode.ThemeIcon {

@@ -143,12 +143,23 @@ export function activate(context: vscode.ExtensionContext): void {
     const text = n.type === "commit"
       ? `Committed in ${n.repoName} — ${n.message ?? "new commit"}`
       : `${n.count} new change${n.count !== 1 ? "s" : ""} in ${n.repoName}`;
+    const actions = n.type === "commit"
+      ? ["Push", "Show Terminal", "View Changes"]
+      : ["Show Terminal", "View Changes"];
     const action = await vscode.window.showInformationMessage(
       `Diffchestrator: ${text}`,
-      "Show Terminal",
-      "View Changes"
+      ...actions
     );
-    if (action === "Show Terminal") {
+    if (action === "Push") {
+      try {
+        await sharedGit.push(n.repoPath);
+        await repoManager.refreshRepo(n.repoPath);
+        vscode.window.showInformationMessage(`Diffchestrator: Pushed ${n.repoName}`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Diffchestrator: Push failed: ${msg}`);
+      }
+    } else if (action === "Show Terminal") {
       repoManager.selectRepo(n.repoPath);
       await showTerminalIfExists(n.repoPath);
     } else if (action === "View Changes") {
@@ -281,6 +292,93 @@ export function activate(context: vscode.ExtensionContext): void {
       const config = vscode.workspace.getConfiguration("diffchestrator");
       const current = config.get<string[]>("scanRoots", []);
       await config.update("scanRoots", current.filter((r) => r !== rootPath), vscode.ConfigurationTarget.Global);
+    })
+  );
+
+  // Bulk fetch all repos
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.fetchAll, async () => {
+      const repos = repoManager.repos;
+      if (repos.length === 0) {
+        vscode.window.showWarningMessage("Diffchestrator: No repos to fetch.");
+        return;
+      }
+      const BATCH = 5;
+      let fetched = 0;
+      let failed = 0;
+      await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: "Diffchestrator: Fetching all repos", cancellable: false },
+        async (progress) => {
+          for (let i = 0; i < repos.length; i += BATCH) {
+            progress.report({ message: `${Math.min(i + BATCH, repos.length)}/${repos.length}` });
+            await Promise.all(repos.slice(i, i + BATCH).map(async (r) => {
+              try {
+                await sharedGit.fetch(r.path);
+                await repoManager.refreshRepo(r.path);
+                fetched++;
+              } catch {
+                failed++;
+              }
+            }));
+          }
+        }
+      );
+      const behindRepos = repoManager.repos.filter((r) => r.behind > 0);
+      const summary = behindRepos.length > 0
+        ? `${behindRepos.length} repo${behindRepos.length > 1 ? "s" : ""} behind remote`
+        : "all up to date";
+      vscode.window.showInformationMessage(
+        `Diffchestrator: Fetched ${fetched} repos (${failed > 0 ? `${failed} failed, ` : ""}${summary})`
+      );
+    }),
+    // Bulk pull all repos
+    vscode.commands.registerCommand(CMD.bulkPull, async () => {
+      const repos = repoManager.repos.filter((r) => r.behind > 0);
+      if (repos.length === 0) {
+        vscode.window.showInformationMessage("Diffchestrator: All repos are up to date. Run Fetch All first.");
+        return;
+      }
+      const confirm = await vscode.window.showWarningMessage(
+        `Pull ${repos.length} repo${repos.length > 1 ? "s" : ""} that are behind remote?`,
+        { modal: true },
+        "Pull"
+      );
+      if (confirm !== "Pull") return;
+      let success = 0;
+      let failed = 0;
+      await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: "Diffchestrator: Pulling repos", cancellable: false },
+        async (progress) => {
+          for (const r of repos) {
+            progress.report({ message: `${r.name}` });
+            try {
+              await sharedGit.pull(r.path);
+              await repoManager.refreshRepo(r.path);
+              success++;
+            } catch {
+              failed++;
+            }
+          }
+        }
+      );
+      vscode.window.showInformationMessage(
+        `Diffchestrator: Pulled ${success} repos${failed > 0 ? `, ${failed} failed` : ""}`
+      );
+    }),
+    // Claude multi-repo review
+    vscode.commands.registerCommand(CMD.claudeReviewAll, async () => {
+      const changedRepos = repoManager.repos.filter((r) => r.totalChanges > 0);
+      if (changedRepos.length === 0) {
+        vscode.window.showInformationMessage("Diffchestrator: No repos with changes to review.");
+        return;
+      }
+      const addDirArgs = changedRepos.map((r) => `--add-dir "${r.path}"`).join(" ");
+      const terminal = vscode.window.createTerminal({
+        name: "Claude: Multi-Repo Review",
+        cwd: repoManager.currentRoot,
+      });
+      terminal.show();
+      terminal.sendText(`claude ${addDirArgs} "Review the changes across all these repositories. Summarize what changed, flag any issues, and suggest improvements."`);
     })
   );
 

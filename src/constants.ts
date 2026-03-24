@@ -53,6 +53,9 @@ export const CMD = {
   removeScanRoot: "diffchestrator.removeScanRoot",
   toggleShowFavorites: "diffchestrator.toggleShowFavorites",
   toggleShowFavoritesOff: "diffchestrator.toggleShowFavoritesOff",
+  fetchAll: "diffchestrator.fetchAll",
+  bulkPull: "diffchestrator.bulkPull",
+  claudeReviewAll: "diffchestrator.claudeReviewAll",
 } as const;
 
 export const CONFIG = {
@@ -66,6 +69,7 @@ export const CONFIG = {
   claudePermissionMode: "diffchestrator.claudePermissionMode",
   showInlineBlame: "diffchestrator.showInlineBlame",
   showFavorites: "diffchestrator.showFavorites",
+  fetchOnScan: "diffchestrator.fetchOnScan",
 } as const;
 
 export const CTX = {

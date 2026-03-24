@@ -23,9 +23,27 @@ export function registerCommitCommands(
         }
 
         const repoName = path.basename(repoPath);
+
+        // Conventional commit prefix picker
+        const prefixes = [
+          { label: "feat", description: "A new feature" },
+          { label: "fix", description: "A bug fix" },
+          { label: "chore", description: "Maintenance / housekeeping" },
+          { label: "refactor", description: "Code change that neither fixes nor adds" },
+          { label: "docs", description: "Documentation only" },
+          { label: "test", description: "Adding or updating tests" },
+          { label: "ci", description: "CI/CD changes" },
+          { label: "$(dash) No prefix", description: "Plain commit message", _plain: true },
+        ];
+        const picked = await vscode.window.showQuickPick(prefixes as (typeof prefixes[0] & { _plain?: boolean })[], {
+          placeHolder: `Commit type for ${repoName}`,
+        });
+        if (!picked) return;
+
         const message = await vscode.window.showInputBox({
           prompt: `Commit message for ${repoName}`,
-          placeHolder: "Enter commit message...",
+          placeHolder: (picked as any)._plain ? "Enter commit message..." : `${picked.label}: describe your change...`,
+          value: (picked as any)._plain ? "" : `${picked.label}: `,
           validateInput: (value) => {
             if (!value || value.trim().length === 0) {
               return "Commit message cannot be empty";

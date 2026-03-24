@@ -86,6 +86,7 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (r.behind > 0) sync.push(`↓${r.behind}`);
       if (sync.length > 0) parts.push(sync.join(" "));
       if (r.totalChanges > 0) parts.push(`${r.totalChanges} changes`);
+      if (r.stashCount > 0) parts.push(`$(archive) ${r.stashCount}`);
       item.description = parts.join(" · ");
       // Unique id per state so VS Code resets selection on refresh
       const state = isActive ? "active" : isMultiSelected ? "multi" : "idle";
@@ -94,11 +95,13 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       (item as vscode.TreeItem & { path: string }).path = r.path;
       item.tooltip = this._buildTooltip(r);
 
-      // Icon: active → blue, multi-selected → purple, changes → yellow, clean → green
+      // Icon: active → blue, multi-selected → purple, behind → orange, changes → yellow, clean → green
       if (isActive) {
         item.iconPath = new vscode.ThemeIcon("repo", new vscode.ThemeColor("charts.blue"));
       } else if (isMultiSelected) {
         item.iconPath = new vscode.ThemeIcon("check", new vscode.ThemeColor("charts.purple"));
+      } else if (r.behind > 0) {
+        item.iconPath = new vscode.ThemeIcon("cloud-download", new vscode.ThemeColor("charts.orange"));
       } else if (r.totalChanges > 0) {
         item.iconPath = new vscode.ThemeIcon("git-commit", new vscode.ThemeColor("charts.yellow"));
       } else {
@@ -257,6 +260,7 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (r.behind > 0) syncParts.push(`${r.behind} behind`);
       lines.push(`Sync: ${syncParts.join(", ")}`);
     }
+    if (r.stashCount > 0) lines.push(`Stashes: ${r.stashCount}`);
     if (r.remoteUrl) lines.push(`Remote: ${r.remoteUrl}`);
 
     const lastCommit = this._lastCommitCache.get(r.path);

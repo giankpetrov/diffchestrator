@@ -334,12 +334,39 @@ export class GitExecutor {
     return result.stdout;
   }
 
+  async fetch(repoPath: string): Promise<string> {
+    const result = await this._run(["fetch", "--prune"], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Fetch failed");
+    }
+    return result.stdout || result.stderr;
+  }
+
   async pull(repoPath: string): Promise<string> {
     const result = await this._run(["pull"], repoPath);
     if (result.code !== 0) {
       throw new Error(result.stderr || "Pull failed");
     }
     return result.stdout || result.stderr;
+  }
+
+  async diffStatFile(repoPath: string, file: string, staged: boolean): Promise<{ additions: number; deletions: number }> {
+    const args = staged
+      ? ["diff", "--cached", "--numstat", "--", file]
+      : ["diff", "--numstat", "--", file];
+    const result = await this._run(args, repoPath);
+    if (result.code !== 0 || !result.stdout.trim()) return { additions: 0, deletions: 0 };
+    const parts = result.stdout.trim().split("\t");
+    return {
+      additions: parts[0] === "-" ? 0 : parseInt(parts[0], 10) || 0,
+      deletions: parts[1] === "-" ? 0 : parseInt(parts[1], 10) || 0,
+    };
+  }
+
+  async stashCount(repoPath: string): Promise<number> {
+    const result = await this._run(["stash", "list"], repoPath);
+    if (result.code !== 0 || !result.stdout.trim()) return 0;
+    return result.stdout.trim().split("\n").length;
   }
 
   async branches(repoPath: string): Promise<{ name: string; current: boolean }[]> {
