@@ -60,9 +60,10 @@ export function registerFavoriteCommands(
       CMD.favoriteCurrent,
       async () => {
         const repoPath = repoManager.selectedRepo;
-        if (!repoPath) {
+        const root = repoManager.currentRoot;
+        if (!repoPath || (root && !repoPath.startsWith(root + path.sep))) {
           vscode.window.showWarningMessage(
-            "Diffchestrator: No repository selected. Use Ctrl+D, R to pick one."
+            "Diffchestrator: No repository selected in the current root. Use Ctrl+D, R to pick one."
           );
           return;
         }
