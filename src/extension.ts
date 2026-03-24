@@ -305,6 +305,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       const BATCH = 5;
       let fetched = 0;
+      let skipped = 0;
       let failed = 0;
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: "Diffchestrator: Fetching all repos", cancellable: false },
@@ -317,8 +318,14 @@ export function activate(context: vscode.ExtensionContext): void {
                 await repoManager.refreshRepo(r.path);
                 fetched++;
               } catch (err) {
-                failed++;
-                outputChannel.appendLine(`[fetch] ${r.name}: ${err instanceof Error ? err.message : err}`);
+                const msg = err instanceof Error ? err.message : String(err);
+                // No remote configured — not a real failure
+                if (msg.includes("No remote") || msg.includes("no such remote") || msg.includes("does not appear to be a git repository")) {
+                  skipped++;
+                } else {
+                  failed++;
+                  outputChannel.appendLine(`[fetch] ${r.name}: ${msg}`);
+                }
               }
             }));
           }
@@ -328,7 +335,11 @@ export function activate(context: vscode.ExtensionContext): void {
       const summary = behindRepos.length > 0
         ? `${behindRepos.length} repo${behindRepos.length > 1 ? "s" : ""} behind remote`
         : "all up to date";
-      const msg = `Diffchestrator: Fetched ${fetched} repos (${failed > 0 ? `${failed} failed, ` : ""}${summary})`;
+      const parts = [`Fetched ${fetched} repos`];
+      if (skipped > 0) parts.push(`${skipped} local-only`);
+      if (failed > 0) parts.push(`${failed} failed`);
+      parts.push(summary);
+      const msg = `Diffchestrator: ${parts.join(", ")}`;
       if (failed > 0) {
         const action = await vscode.window.showWarningMessage(msg, "Show Log");
         if (action === "Show Log") outputChannel.show();
