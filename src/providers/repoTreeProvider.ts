@@ -87,6 +87,13 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       if (sync.length > 0) parts.push(sync.join(" "));
       if (r.totalChanges > 0) parts.push(`${r.totalChanges} changes`);
       if (r.stashCount > 0) parts.push(`$(archive) ${r.stashCount}`);
+      // Show tags for this repo
+      const config = vscode.workspace.getConfiguration("diffchestrator");
+      const repoTags: Record<string, string[]> = config.get("repoTags", {});
+      const tags = Object.entries(repoTags)
+        .filter(([, repos]) => repos.includes(r.path))
+        .map(([tag]) => `#${tag}`);
+      if (tags.length > 0) parts.push(tags.join(" "));
       item.description = parts.join(" · ");
       // Unique id per state so VS Code resets selection on refresh
       const state = isActive ? "active" : isMultiSelected ? "multi" : "idle";

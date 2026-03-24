@@ -139,7 +139,9 @@ export function activate(context: vscode.ExtensionContext): void {
     const countLabel = repoManager.changedOnly
       ? `${repos.filter(r => r.totalChanges > 0).length} changed`
       : `${repos.length} repos`;
-    repoTreeView.description = rootName ? `${rootName} — ${countLabel}` : countLabel;
+    const tagLabel = repoManager.activeTagFilter ? `#${repoManager.activeTagFilter}` : "";
+    const descParts = [rootName, tagLabel, countLabel].filter(Boolean);
+    repoTreeView.description = descParts.join(" — ");
 
     // Active Repos view: show root name
     activeReposView.description = rootName || undefined;
