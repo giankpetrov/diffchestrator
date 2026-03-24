@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import type { RepoManager } from "../services/repoManager";
 import type { RepoSummary } from "../types";
 import { CMD } from "../constants";
@@ -112,6 +113,11 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
     return item;
   }
 
+  private _isUnderRoot(repoPath: string): boolean {
+    const root = this.repoManager.currentRoot;
+    return !root || repoPath.startsWith(root + path.sep);
+  }
+
   getChildren(): ActiveRepoNode[] {
     const nodes: ActiveRepoNode[] = [];
     const activePath = this.repoManager.selectedRepo;
@@ -119,7 +125,7 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
     const recentPaths = this.repoManager.recentRepoPaths;
     const seen = new Set<string>();
 
-    if (activePath) {
+    if (activePath && this._isUnderRoot(activePath)) {
       const repo = this.repoManager.getRepo(activePath);
       if (repo) {
         nodes.push({ repo, role: "active", terminalKinds: this._getTerminalKinds(activePath) });
@@ -128,7 +134,7 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
     }
 
     for (const p of multiPaths) {
-      if (seen.has(p)) continue;
+      if (seen.has(p) || !this._isUnderRoot(p)) continue;
       const repo = this.repoManager.getRepo(p);
       if (repo) {
         nodes.push({ repo, role: "selected", terminalKinds: this._getTerminalKinds(p) });
@@ -137,7 +143,7 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
     }
 
     for (const p of recentPaths) {
-      if (seen.has(p)) continue;
+      if (seen.has(p) || !this._isUnderRoot(p)) continue;
       const repo = this.repoManager.getRepo(p);
       if (repo) {
         nodes.push({ repo, role: "recent", terminalKinds: this._getTerminalKinds(p) });
