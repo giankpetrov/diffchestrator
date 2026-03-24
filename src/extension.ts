@@ -706,7 +706,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand(CMD.loadSnapshot, async () => {
       const config = vscode.workspace.getConfiguration("diffchestrator");
-      const snapshots: Record<string, { root?: string; favorites: string[]; recent: string[]; selected?: string }> = config.get("snapshots", {});
+      const snapshots = { ...config.get<Record<string, { root?: string; favorites: string[]; recent: string[]; selected?: string }>>("snapshots", {}) };
       const names = Object.keys(snapshots);
       if (names.length === 0) {
         vscode.window.showInformationMessage("Diffchestrator: No snapshots saved.");
@@ -716,20 +716,20 @@ export function activate(context: vscode.ExtensionContext): void {
         ...names.map((n) => ({
           label: `$(bookmark) ${n}`,
           description: snapshots[n].root ? path.basename(snapshots[n].root!) : "",
+          _action: "load" as const,
           _name: n,
-          _delete: false,
         })),
         ...names.map((n) => ({
           label: `$(trash) Delete "${n}"`,
           description: "",
+          _action: "delete" as const,
           _name: n,
-          _delete: true,
         })),
       ];
       const picked = await vscode.window.showQuickPick(items, { placeHolder: "Load or delete a snapshot" });
       if (!picked) return;
 
-      if (picked._delete) {
+      if (picked._action === "delete") {
         delete snapshots[picked._name];
         await config.update("snapshots", snapshots, vscode.ConfigurationTarget.Global);
         vscode.window.showInformationMessage(`Diffchestrator: Snapshot "${picked._name}" deleted`);
@@ -737,6 +737,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       const snap = snapshots[picked._name];
+      if (!snap) return;
       // Restore favorites
       await config.update("favorites", snap.favorites, vscode.ConfigurationTarget.Global);
       // Restore recent repos + selection
