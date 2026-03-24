@@ -16,7 +16,8 @@ interface RunResult {
 export class GitExecutor {
   // Short-TTL cache for status() to deduplicate concurrent calls
   private _statusCache = new Map<string, { result: RepoStatus; time: number }>();
-  private static readonly STATUS_CACHE_TTL = 500; // ms
+  private _statusInflight = new Map<string, Promise<RepoStatus>>();
+  private static readonly STATUS_CACHE_TTL = 1000; // ms
 
   private async _run(args: string[], cwd: string): Promise<RunResult> {
     try {
@@ -54,12 +55,26 @@ export class GitExecutor {
   }
 
   async status(repoPath: string): Promise<RepoStatus> {
-    // Return cached result if fresh (deduplicates concurrent calls)
+    // Return cached result if fresh
     const cached = this._statusCache.get(repoPath);
     if (cached && Date.now() - cached.time < GitExecutor.STATUS_CACHE_TTL) {
       return cached.result;
     }
 
+    // Deduplicate: if a call is already in-flight for this repo, return the same Promise
+    const inflight = this._statusInflight.get(repoPath);
+    if (inflight) return inflight;
+
+    const promise = this._statusUncached(repoPath);
+    this._statusInflight.set(repoPath, promise);
+    try {
+      return await promise;
+    } finally {
+      this._statusInflight.delete(repoPath);
+    }
+  }
+
+  private async _statusUncached(repoPath: string): Promise<RepoStatus> {
     const result = await this._run(
       ["status", "--porcelain=v2", "--branch", "-unormal"],
       repoPath

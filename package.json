@@ -39,7 +39,13 @@
       "description": "License"
     }
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:diffchestrator.repos",
+    "onView:diffchestrator.activeRepos",
+    "onView:diffchestrator.favorites",
+    "onView:diffchestrator.changedFiles",
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {

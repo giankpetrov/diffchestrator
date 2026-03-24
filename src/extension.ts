@@ -37,8 +37,15 @@ export function activate(context: vscode.ExtensionContext): void {
   const outputChannel = vscode.window.createOutputChannel("Diffchestrator");
   context.subscriptions.push(outputChannel);
 
-  // Track last open file per repo so switching back restores context
+  // Track last open file per repo so switching back restores context (LRU, max 20)
+  const MAX_LAST_OPEN = 20;
   const lastOpenFile = new Map<string, vscode.Uri>();
+  const capLastOpenFile = () => {
+    while (lastOpenFile.size > MAX_LAST_OPEN) {
+      const oldest = lastOpenFile.keys().next().value!;
+      lastOpenFile.delete(oldest);
+    }
+  };
   let switchingRepo = false; // flag to ignore editor changes during repo switch
 
   context.subscriptions.push(
@@ -55,9 +62,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
       const uri = editor.document.uri;
       if (uri.scheme === "file" && uri.fsPath.startsWith(repoPath)) {
+        lastOpenFile.delete(repoPath); // re-insert at end for LRU
         lastOpenFile.set(repoPath, uri);
+        capLastOpenFile();
       } else if (uri.scheme === "git-show") {
+        lastOpenFile.delete(repoPath);
         lastOpenFile.set(repoPath, uri);
+        capLastOpenFile();
       }
     })
   );
@@ -469,6 +480,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Phase 5: File watcher — auto-refresh repos on filesystem changes
   const fileWatcher = new FileWatcher(repoManager);
+  repoManager.fileWatcher = fileWatcher;
   context.subscriptions.push(fileWatcher);
 
   // Phase 6: Status bar — shows repo/change counts

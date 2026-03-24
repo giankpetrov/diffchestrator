@@ -17,11 +17,13 @@ export class RepoManager implements vscode.Disposable {
   private _changedOnly: boolean;
   private _refreshTimer: ReturnType<typeof setInterval> | undefined;
   private _git = new GitExecutor();
+  private _fileWatcher?: { suppressRefresh(repoPath: string, ms?: number): void };
   private _windowFocused = true;
   private _focusDisposable: vscode.Disposable | undefined;
 
   private _onDidChangeRepos = new vscode.EventEmitter<void>();
   readonly onDidChangeRepos = this._onDidChangeRepos.event;
+  private _repoChangeCoalesceTimer: ReturnType<typeof setTimeout> | undefined;
 
   private _onDidChangeSelection = new vscode.EventEmitter<void>();
   readonly onDidChangeSelection = this._onDidChangeSelection.event;
@@ -85,8 +87,21 @@ export class RepoManager implements vscode.Disposable {
     return this._git;
   }
 
+  set fileWatcher(fw: { suppressRefresh(repoPath: string, ms?: number): void }) {
+    this._fileWatcher = fw;
+  }
+
   getRepo(repoPath: string): RepoSummary | undefined {
     return this._repos.get(repoPath);
+  }
+
+  /** Coalesce rapid repo-change events into one fire per tick */
+  private _fireRepoChangeCoalesced(): void {
+    if (this._repoChangeCoalesceTimer) return;
+    this._repoChangeCoalesceTimer = setTimeout(() => {
+      this._repoChangeCoalesceTimer = undefined;
+      this._onDidChangeRepos.fire();
+    }, 50);
   }
 
   async scan(rootPath: string): Promise<void> {
@@ -114,7 +129,7 @@ export class RepoManager implements vscode.Disposable {
         for (let i = 0; i < repos.length; i += BATCH) {
           progress.report({ message: `${Math.min(i + BATCH, repos.length)}/${repos.length}` });
           await Promise.all(repos.slice(i, i + BATCH).map((r) => scanner.fetchMetadata(r)));
-          this._onDidChangeRepos.fire();
+          this._fireRepoChangeCoalesced();
         }
       }
     );
@@ -123,6 +138,8 @@ export class RepoManager implements vscode.Disposable {
   }
 
   async refreshRepo(repoPath: string): Promise<void> {
+    // Suppress file watcher to avoid double refresh
+    this._fileWatcher?.suppressRefresh(repoPath);
     try {
       // shortStatus now returns branch too — single git process instead of two
       const s = await this._git.shortStatus(repoPath);
@@ -157,7 +174,7 @@ export class RepoManager implements vscode.Disposable {
       existing.ahead = s.ahead;
       existing.behind = s.behind;
       existing.headOid = s.headOid;
-      this._onDidChangeRepos.fire();
+      this._fireRepoChangeCoalesced();
 
       // Fire specific notifications (after state update)
       const repoName = existing.name;

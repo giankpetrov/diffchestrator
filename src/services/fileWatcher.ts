@@ -1,14 +1,25 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 import type { RepoManager } from "./repoManager";
 
 export class FileWatcher implements vscode.Disposable {
-  private _watchers = new Map<string, vscode.FileSystemWatcher>();
+  private _watchers = new Map<string, fs.FSWatcher>();
   private _debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private _repoManager: RepoManager;
   private _disposables: vscode.Disposable[] = [];
+  private _suppressUntil = new Map<string, number>();
 
   constructor(repoManager: RepoManager) {
     this._repoManager = repoManager;
+  }
+
+  /**
+   * Suppress file watcher refresh for a repo temporarily.
+   * Used after explicit refreshRepo() calls to avoid double refresh.
+   */
+  suppressRefresh(repoPath: string, durationMs = 600): void {
+    this._suppressUntil.set(repoPath, Date.now() + durationMs);
   }
 
   /**
@@ -33,36 +44,30 @@ export class FileWatcher implements vscode.Disposable {
   private _watchRepo(repoPath: string): void {
     if (this._watchers.has(repoPath)) return;
 
-    const pattern = new vscode.RelativePattern(repoPath, "**/*");
-    const watcher = vscode.workspace.createFileSystemWatcher(
-      pattern,
-      false, // create
-      false, // change
-      false  // delete
-    );
-
-    const handler = (uri: vscode.Uri) => {
-      // Skip .git internal changes
-      const relative = uri.fsPath.slice(repoPath.length);
-      if (
-        relative.includes("/.git/") ||
-        relative.includes("\\.git\\") ||
-        relative.endsWith("/.git") ||
-        relative.endsWith("\\.git")
-      ) {
-        return;
-      }
-      this._debouncedRefresh(repoPath);
-    };
-
-    watcher.onDidCreate(handler);
-    watcher.onDidChange(handler);
-    watcher.onDidDelete(handler);
-
-    this._watchers.set(repoPath, watcher);
+    const gitDir = path.join(repoPath, ".git");
+    try {
+      const watcher = fs.watch(gitDir, { persistent: false }, (_event, filename) => {
+        // Only react to meaningful git state changes
+        if (filename && /^(HEAD|index|COMMIT_EDITMSG|refs|MERGE_HEAD|REBASE_HEAD)/.test(filename)) {
+          this._debouncedRefresh(repoPath);
+        }
+      });
+      watcher.on("error", () => {
+        // Repo may have been deleted
+        this._watchers.delete(repoPath);
+      });
+      this._watchers.set(repoPath, watcher);
+    } catch {
+      // .git directory may not exist yet
+    }
   }
 
   private _debouncedRefresh(repoPath: string): void {
+    // Check suppression
+    const until = this._suppressUntil.get(repoPath);
+    if (until && Date.now() < until) return;
+    this._suppressUntil.delete(repoPath);
+
     const existing = this._debounceTimers.get(repoPath);
     if (existing) clearTimeout(existing);
 
@@ -80,7 +85,7 @@ export class FileWatcher implements vscode.Disposable {
     // Remove watchers for repos that no longer exist
     for (const [watchedPath, watcher] of this._watchers) {
       if (!currentPaths.has(watchedPath)) {
-        watcher.dispose();
+        watcher.close();
         this._watchers.delete(watchedPath);
       }
     }
@@ -95,7 +100,7 @@ export class FileWatcher implements vscode.Disposable {
 
   private disposeWatchers(): void {
     for (const watcher of this._watchers.values()) {
-      watcher.dispose();
+      watcher.close();
     }
     this._watchers.clear();
     for (const timer of this._debounceTimers.values()) {

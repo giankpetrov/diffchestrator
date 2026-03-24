@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
+import * as fs from "fs/promises";
 import * as path from "path";
 import type { RepoManager } from "./repoManager";
 
@@ -38,7 +38,7 @@ export class WorkspaceAutoScan implements vscode.Disposable {
 
     // Check each workspace folder for git repos
     for (const folder of folders) {
-      const hasGit = this._containsGitRepo(folder.uri.fsPath);
+      const hasGit = await this._containsGitRepo(folder.uri.fsPath);
       if (hasGit) {
         const answer = await vscode.window.showInformationMessage(
           `Diffchestrator: Workspace folder "${folder.name}" contains git repos. Add it to scan roots?`,
@@ -63,7 +63,7 @@ export class WorkspaceAutoScan implements vscode.Disposable {
   }
 
   private async _checkAndOfferScan(folderPath: string): Promise<void> {
-    const hasGit = this._containsGitRepo(folderPath);
+    const hasGit = await this._containsGitRepo(folderPath);
     if (!hasGit) return;
 
     const answer = await vscode.window.showInformationMessage(
@@ -89,19 +89,22 @@ export class WorkspaceAutoScan implements vscode.Disposable {
 
   /**
    * Check if a directory or its immediate children contain a .git folder.
-   * Only looks 2 levels deep to keep it fast.
+   * Only looks 2 levels deep to keep it fast. Fully async to avoid blocking.
    */
-  private _containsGitRepo(dirPath: string): boolean {
-    // Check the directory itself
-    if (fs.existsSync(path.join(dirPath, ".git"))) return true;
-
-    // Check one level of children
+  private async _containsGitRepo(dirPath: string): Promise<boolean> {
     try {
-      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+      await fs.access(path.join(dirPath, ".git"));
+      return true;
+    } catch { /* not found */ }
+
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
       for (const entry of entries) {
         if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".git") {
-          const childGit = path.join(dirPath, entry.name, ".git");
-          if (fs.existsSync(childGit)) return true;
+          try {
+            await fs.access(path.join(dirPath, entry.name, ".git"));
+            return true;
+          } catch { /* not found */ }
         }
       }
     } catch {

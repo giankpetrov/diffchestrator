@@ -8,6 +8,7 @@ export class StatusBarManager implements vscode.Disposable {
   private _activeItem: vscode.StatusBarItem;
   private _repoManager: RepoManager;
   private _disposables: vscode.Disposable[] = [];
+  private _refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(repoManager: RepoManager) {
     this._repoManager = repoManager;
@@ -66,7 +67,11 @@ export class StatusBarManager implements vscode.Disposable {
   }
 
   private _refresh(): void {
-    this._refreshSummary();
+    if (this._refreshTimer) return;
+    this._refreshTimer = setTimeout(() => {
+      this._refreshTimer = undefined;
+      this._refreshSummary();
+    }, 150);
   }
 
   private _refreshActive(): void {
@@ -87,6 +92,7 @@ export class StatusBarManager implements vscode.Disposable {
   }
 
   dispose(): void {
+    if (this._refreshTimer) clearTimeout(this._refreshTimer);
     this._repoItem.dispose();
     this._activeItem.dispose();
     for (const d of this._disposables) {
