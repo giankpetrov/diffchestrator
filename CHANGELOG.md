@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.31.2
+
+### Bug Fixes
+- distinguish local-only repos from real fetch failures
+
 ## 0.31.1
 
 ### Bug Fixes
