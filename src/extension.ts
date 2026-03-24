@@ -502,6 +502,7 @@ export function activate(context: vscode.ExtensionContext): void {
         { label: "Ctrl+D, .", description: "Search active repos" },
         { label: "Ctrl+D, Shift+/", description: "Search all repos" },
         { label: "Ctrl+D, W", description: "Open repo in new window" },
+        { label: "Ctrl+D, K", description: "Show this cheatsheet" },
       ];
       await vscode.window.showQuickPick(shortcuts, {
         placeHolder: "Diffchestrator Keyboard Shortcuts (Ctrl+D chord prefix)",

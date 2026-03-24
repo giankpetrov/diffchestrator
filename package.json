@@ -786,6 +786,11 @@
         "command": "diffchestrator.commit",
         "key": "ctrl+d m",
         "mac": "cmd+d m"
+      },
+      {
+        "command": "diffchestrator.showShortcuts",
+        "key": "ctrl+d k",
+        "mac": "cmd+d k"
       }
     ],
     "configuration": {
