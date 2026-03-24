@@ -9,5 +9,4 @@ esbuild.mjs
 *.vsix
 .vscode-test/**
 resources/icons/icon.svg
-resources/icons/diffchestrator.svg
 scripts/**
