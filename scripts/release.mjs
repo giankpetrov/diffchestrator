@@ -78,10 +78,47 @@ function bumpVersion(bump) {
   return pkg.version;
 }
 
+// ── Update CHANGELOG ────────────────────────────────────────────────
+function updateChangelog(version, since) {
+  const range = since ? `${since}..HEAD` : "HEAD";
+  const log = run(`git log ${range} --pretty=format:"%s" --no-merges`);
+  const lines = log.split("\n").filter(Boolean);
+
+  const feats = [];
+  const fixes = [];
+  const perfs = [];
+  const others = [];
+
+  for (const msg of lines) {
+    if (/^chore\(release\)/.test(msg)) continue;
+    if (/^feat/.test(msg)) feats.push(msg.replace(/^feat[^:]*:\s*/, ""));
+    else if (/^fix/.test(msg)) fixes.push(msg.replace(/^fix[^:]*:\s*/, ""));
+    else if (/^perf/.test(msg)) perfs.push(msg.replace(/^perf[^:]*:\s*/, ""));
+    else if (/^ci/.test(msg)) continue; // skip CI commits
+    else others.push(msg.replace(/^\w+[^:]*:\s*/, ""));
+  }
+
+  if (feats.length + fixes.length + perfs.length + others.length === 0) return;
+
+  const sections = [];
+  if (feats.length) sections.push("### Features\n" + feats.map((f) => `- ${f}`).join("\n"));
+  if (fixes.length) sections.push("### Bug Fixes\n" + fixes.map((f) => `- ${f}`).join("\n"));
+  if (perfs.length) sections.push("### Performance\n" + perfs.map((f) => `- ${f}`).join("\n"));
+  if (others.length) sections.push("### Other\n" + others.map((f) => `- ${f}`).join("\n"));
+
+  const entry = `## ${version}\n\n${sections.join("\n\n")}`;
+
+  const changelogPath = join(root, "CHANGELOG.md");
+  const existing = readFileSync(changelogPath, "utf-8");
+  const header = "# Changelog\n\nAll notable changes to Diffchestrator are documented here. Generated from conventional commits.\n";
+  const body = existing.replace(/^# Changelog\n+.*Generated from conventional commits\.\n*/m, "");
+  writeFileSync(changelogPath, `${header}\n${entry}\n\n${body}`);
+}
+
 // ── Commit and tag ──────────────────────────────────────────────────
 function commitAndTag(version) {
-  // Stage only the version bump
-  run("git add package.json");
+  // Stage version bump + changelog
+  run("git add package.json CHANGELOG.md");
 
   // Check if there's actually something to commit
   try {
@@ -111,7 +148,8 @@ console.log(`\n${tag ? `Last tag: ${tag}` : "No previous tag found"}`);
 console.log(`Bump:     ${bump}`);
 console.log(`Version:  v${version}\n`);
 
-// Commit version bump and tag before building
+// Update CHANGELOG, commit version bump, and tag before building
+updateChangelog(version, tag);
 commitAndTag(version);
 console.log(`Committed and tagged v${version}\n`);
 

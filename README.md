@@ -17,28 +17,31 @@ Claude Code works best when you can see what it changed, across every repo it to
 - **Terminal reuse** — `Ctrl+D, L` and `Ctrl+D, Y` reuse existing sessions instead of spawning new ones
 
 ### Active Repos & Workspace Switching
-- **Active Repos view** — sidebar section showing recent repos (MRU, up to 10) with live terminal status indicators
+- **Active Repos view** — unified sidebar section showing favorites (star icons) + recent repos (MRU, up to 10) with live terminal status indicators
+- **Toggle favorites** — star button in Active Repos title bar shows/hides favorites (filled star = visible, empty star = hidden). Hidden favorites that are active/recent remain visible as their non-favorite role
 - **Persisted across reloads** — active repos and selection survive VS Code restarts
-- **Cycle repos** — `Ctrl+D, Tab` cycles through all recent repos (like Alt+Tab but for repos), switching the changed files view, terminal, and diff editor in one keystroke
+- **Cycle repos** — `Ctrl+D, Tab` cycles through all opened repos including favorites, switching the changed files view, terminal, and diff editor in one keystroke
 - **Close active repos** — `Ctrl+D, Q` closes current, `Ctrl+D, Shift+Q` picks which to close, `Ctrl+D, Shift+Tab` closes all
 - **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Shell)
-- **Auto-switch terminal** — clicking a repo in Active Repos, Favorites, or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Shell)
+- **Auto-switch terminal** — clicking a repo in Active Repos or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Shell)
 - **Terminal tab sync** — clicking a terminal tab (Claude, Yolo, shell) auto-selects the repo in the sidebar, opens its changed files, and adds it to Active Repos if not already there
 - **Auto-add on terminal open** — opening a terminal, Claude Code, or Yolo session for a repo automatically adds it to Active Repos
 - **Notifications** — notifies when Claude commits or modifies files in any repo, with "Show Terminal" and "View Changes" action buttons (changes notification debounced 15s to avoid mid-edit alerts)
+- **CLI validation** — checks that `claude` and `docker` are installed before launching Claude Code, AI Commit, or Yolo terminals
 
 ### Repository Discovery
 - **Auto-scan** a root directory to discover all git repos (BFS, configurable depth)
+- **Switch scan root** — `Ctrl+D, Shift+S` quick pick dropdown to switch between configured roots; also available as a button in the Repositories title bar
 - **Auto-scan workspace folders** on startup if no roots configured, and when new folders are added
 - **Skip directories** like `node_modules`, `.terraform`, `vendor`, `build`, etc. (configurable)
 - **Changed-only filter** — toggle to show only repos with uncommitted changes (`Ctrl+D, D`)
 - **Changed repos sort first** in the tree for quick access
+- **Progress indication** — shows scanning/refreshing progress in the status bar for large repo counts
 
-### Sidebar Views
-- **Active Repos** — recently opened repos with terminal status, active repo highlighted in blue
+### Sidebar Views (3 sections)
+- **Active Repos** — favorites (yellow/blue stars) + recently opened repos with terminal status, active repo highlighted in blue. Pin repos with `Ctrl+D, E`
 - **Changed Files** — staged/unstaged/untracked files for the selected repo, grouped by status
-- **Favorites** — pin repos for quick access with `Ctrl+D, E`; active repo highlighted with blue star
-- **Repositories** — hierarchical tree with common path prefix collapsing, change count badges
+- **Repositories** — hierarchical tree with common path prefix collapsing, change count badges, root switcher button
 - **View descriptions** — active repo name + branch shown next to "Changed Files" title
 - **Activity bar badge** — total change count across all repos
 - **Tooltips** — hover a repo to see path, branch, change counts, ahead/behind sync status, remote URL, and last commit with relative date
@@ -79,16 +82,21 @@ Claude Code works best when you can see what it changed, across every repo it to
 - **Open in New Window** (`Ctrl+D, W`) — opens the selected repo in a new VS Code window for full native search
 
 ### File Watcher
-- Automatic filesystem watching per repo with 500ms debounce
-- Status updates in real-time when files change externally (terminal, other editors)
+- Watches `.git/` directories per repo (HEAD, index, refs changes) with 500ms debounce
+- Status updates in real-time when commits, staging, or branch changes occur
+- Auto-suppresses after explicit operations (stage/commit) to avoid redundant refreshes
 - Falls back to polling at configurable interval (default 10s)
 - **Pauses when VS Code loses focus** — no wasted disk reads in the background; refreshes immediately on refocus
 
 ### Performance
-- **Single shared git instance** — all commands share one GitExecutor with a 500ms TTL cache, eliminating redundant git process spawns
+- **Single shared git instance** — all commands share one GitExecutor with request deduplication (concurrent calls share one Promise) and a 1s TTL cache
+- **Lazy activation** — extension defers loading until the sidebar is opened or VS Code finishes startup
+- **Smart file watching** — watches `.git/` directories only (not `**/*`), with automatic suppression after explicit refreshes to avoid double updates
+- **Event coalescing** — rapid repo-change events are batched into a single tick, preventing cascading tree rebuilds during scan
 - **Conditional event firing** — tree views only rebuild when data actually changes (~90% fewer rebuilds during idle polling)
-- **Batched concurrency** — `refreshAll` and `_refreshLastCommits` limited to 5 concurrent git processes
+- **Batched concurrency** — `refreshAll` and scan limited to 5-10 concurrent git processes with progress indication
 - **Terminal state caching** — Active Repos only rescans terminals on open/close events
+- **Status bar debounce** — consolidates multiple rapid updates into one render
 
 ### Status Bar
 - **Left**: repo count + total changes (click to open sidebar)
@@ -125,6 +133,8 @@ All shortcuts use **Ctrl+D** as a chord prefix — press `Ctrl+D`, release, then
 | `Ctrl+D, .` | Search active repos |
 | `Ctrl+D, Shift+/` | Search all repos |
 | `Ctrl+D, W` | Open repo in new VS Code window |
+| `Ctrl+D, Shift+S` | Switch scan root |
+| `Ctrl+D, M` | Commit with message |
 
 > On macOS, use `Cmd+D` instead of `Ctrl+D`.
 
@@ -137,6 +147,11 @@ Right-click a **repository** in the tree:
 - Browse Files / Open Repo in New Window
 - Open Terminal / Open Claude Code / Yolo
 - Toggle Favorite / Select (for multi-repo operations)
+
+Right-click a **directory** in the tree:
+
+- Open Terminal / Open Claude Code / Yolo (launches with cwd set to the directory)
+- Toggle Favorite
 
 Right-click a **changed file**:
 
@@ -164,6 +179,7 @@ Right-click a **changed file**:
 | `diffchestrator.autoRefreshInterval` | `10` | Auto-refresh interval in seconds (0 to disable) |
 | `diffchestrator.claudePermissionMode` | `acceptEdits` | Permission mode for Claude CLI |
 | `diffchestrator.showInlineBlame` | `true` | Show inline git blame on current line |
+| `diffchestrator.showFavorites` | `true` | Show favorites in Active Repos view |
 | `diffchestrator.favorites` | `[]` | Persisted favorite paths (managed by extension) |
 
 ## Getting Started
@@ -220,9 +236,8 @@ src/
 │   │                         # log, branches, checkout, stash, blame, show, clean, grep
 │   └── scanner.ts            # BFS directory scanner
 ├── providers/
-│   ├── activeReposProvider.ts # Recent repos with terminal status indicators
+│   ├── activeReposProvider.ts # Favorites + recent repos with terminal indicators
 │   ├── repoTreeProvider.ts   # Repo tree with active/selected highlights + tooltips
-│   ├── favoritesTreeProvider.ts # Favorites with active highlight
 │   ├── changedFilesProvider.ts
 │   └── gitContentProvider.ts # TextDocumentContentProvider for diff/show URIs
 ├── commands/
@@ -249,6 +264,7 @@ src/
 ├── views/
 │   └── diffWebviewPanel.ts   # Multi-repo diff webview
 └── utils/
+    ├── time.ts              # Shared timeAgo / timeAgoShort utilities
     ├── paths.ts
     └── disposable.ts
 

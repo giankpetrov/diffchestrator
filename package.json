@@ -673,6 +673,11 @@
         "command": "diffchestrator.switchRoot",
         "key": "ctrl+d shift+s",
         "mac": "cmd+d shift+s"
+      },
+      {
+        "command": "diffchestrator.commit",
+        "key": "ctrl+d m",
+        "mac": "cmd+d m"
       }
     ],
     "configuration": {
