@@ -4,6 +4,7 @@ export const VIEW_ACTIVE_REPOS = "diffchestrator.activeRepos";
 export const VIEW_REPOS = "diffchestrator.repos";
 export const VIEW_FAVORITES = "diffchestrator.favorites";
 export const VIEW_CHANGED_FILES = "diffchestrator.changedFiles";
+export const VIEW_SCAN_ROOTS = "diffchestrator.scanRoots";
 
 export const CMD = {
   scan: "diffchestrator.scan",
@@ -49,6 +50,9 @@ export const CMD = {
   closeAllActiveRepos: "diffchestrator.closeAllActiveRepos",
   nextChangedFile: "diffchestrator.nextChangedFile",
   prevChangedFile: "diffchestrator.prevChangedFile",
+  switchRoot: "diffchestrator.switchRoot",
+  addScanRoot: "diffchestrator.addScanRoot",
+  removeScanRoot: "diffchestrator.removeScanRoot",
 } as const;
 
 export const CONFIG = {

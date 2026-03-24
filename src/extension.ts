@@ -3,7 +3,7 @@ import { RepoManager } from "./services/repoManager";
 import { RepoTreeProvider } from "./providers/repoTreeProvider";
 import { FavoritesTreeProvider } from "./providers/favoritesTreeProvider";
 import { ChangedFilesProvider } from "./providers/changedFilesProvider";
-import { CMD, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_FAVORITES, VIEW_CHANGED_FILES } from "./constants";
+import { CMD, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_FAVORITES, VIEW_CHANGED_FILES, VIEW_SCAN_ROOTS } from "./constants";
 import { registerScanCommands } from "./commands/scan";
 import { registerStageCommands, openNextPendingFile, openFileDiff } from "./commands/stage";
 import { registerCommitCommands } from "./commands/commit";
@@ -19,6 +19,7 @@ import { registerDiscardCommands } from "./commands/discard";
 import { registerSwitchBranchCommands } from "./commands/switchBranch";
 import { registerStashCommands } from "./commands/stash";
 import { ActiveReposProvider } from "./providers/activeReposProvider";
+import { ScanRootsProvider } from "./providers/scanRootsProvider";
 import { GitContentProvider } from "./providers/gitContentProvider";
 import { DiffWebviewPanel } from "./views/diffWebviewPanel";
 import { FileWatcher } from "./services/fileWatcher";
@@ -90,6 +91,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const repoTree = new RepoTreeProvider(repoManager);
   const favTree = new FavoritesTreeProvider(repoManager);
   const changedFiles = new ChangedFilesProvider(repoManager);
+  const scanRoots = new ScanRootsProvider(repoManager);
 
   // Git content provider for diff URIs
   const gitContentProvider = new GitContentProvider(repoManager.git);
@@ -98,6 +100,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const repoTreeView = vscode.window.createTreeView(VIEW_REPOS, { treeDataProvider: repoTree });
   const favTreeView = vscode.window.createTreeView(VIEW_FAVORITES, { treeDataProvider: favTree });
   const changedFilesView = vscode.window.createTreeView(VIEW_CHANGED_FILES, { treeDataProvider: changedFiles });
+  const scanRootsView = vscode.window.createTreeView(VIEW_SCAN_ROOTS, { treeDataProvider: scanRoots });
 
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider("git-show", gitContentProvider),
@@ -105,6 +108,7 @@ export function activate(context: vscode.ExtensionContext): void {
     repoTreeView,
     favTreeView,
     changedFilesView,
+    scanRootsView,
   );
 
   // Update view descriptions + badge when state changes
@@ -176,6 +180,11 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   // Register command modules
+  // File watcher — created before commands so switchRoot can reference it
+  const fileWatcher = new FileWatcher(repoManager);
+  repoManager.fileWatcher = fileWatcher;
+  context.subscriptions.push(fileWatcher);
+
   registerScanCommands(context, repoManager);
   registerStageCommands(context, repoManager);
   registerCommitCommands(context, repoManager, outputChannel);
@@ -190,6 +199,42 @@ export function activate(context: vscode.ExtensionContext): void {
   registerDiscardCommands(context, repoManager);
   registerSwitchBranchCommands(context, repoManager);
   registerStashCommands(context, repoManager);
+
+  // Scan Roots commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.switchRoot, async (rootPath?: string) => {
+      if (!rootPath) return;
+      await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: `Diffchestrator: Scanning ${path.basename(rootPath)}` },
+        async () => {
+          await repoManager.scan(rootPath);
+          fileWatcher.watchAll();
+        }
+      );
+    }),
+    vscode.commands.registerCommand(CMD.addScanRoot, async () => {
+      const folders = await vscode.window.showOpenDialog({
+        canSelectFolders: true,
+        canSelectFiles: false,
+        canSelectMany: false,
+        title: "Select root directory to add",
+      });
+      if (!folders || folders.length === 0) return;
+      const newRoot = folders[0].fsPath;
+      const config = vscode.workspace.getConfiguration("diffchestrator");
+      const current = config.get<string[]>("scanRoots", []);
+      if (!current.includes(newRoot)) {
+        await config.update("scanRoots", [...current, newRoot], vscode.ConfigurationTarget.Global);
+      }
+    }),
+    vscode.commands.registerCommand(CMD.removeScanRoot, async (item?: any) => {
+      const rootPath = item?.rootPath;
+      if (!rootPath) return;
+      const config = vscode.workspace.getConfiguration("diffchestrator");
+      const current = config.get<string[]>("scanRoots", []);
+      await config.update("scanRoots", current.filter((r) => r !== rootPath), vscode.ConfigurationTarget.Global);
+    })
+  );
 
   // Toggle changed only
   context.subscriptions.push(
@@ -478,10 +523,7 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Phase 5: File watcher — auto-refresh repos on filesystem changes
-  const fileWatcher = new FileWatcher(repoManager);
-  repoManager.fileWatcher = fileWatcher;
-  context.subscriptions.push(fileWatcher);
+  // Phase 5: File watcher already created above (before command registrations)
 
   // Phase 6: Status bar — shows repo/change counts
   const statusBar = new StatusBarManager(repoManager);
