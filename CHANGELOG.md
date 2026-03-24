@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.35.0
+
+### Features
+- open terminal at scan root path
+
 ## 0.34.0
 
 ### Features
