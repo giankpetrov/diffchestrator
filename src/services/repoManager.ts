@@ -151,6 +151,12 @@ export class RepoManager implements vscode.Disposable {
     this._fileWatcher = fw;
   }
 
+  /**
+   * Gets a repository summary by its path.
+   * This provides an efficient O(1) lookup compared to iterating over `allRepos` or `repos`.
+   * @param repoPath The absolute path of the repository
+   * @returns The `RepoSummary` or `undefined` if not found
+   */
   getRepo(repoPath: string): RepoSummary | undefined {
     return this._repos.get(repoPath);
   }
