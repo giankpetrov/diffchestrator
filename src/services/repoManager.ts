@@ -7,6 +7,7 @@ import { CTX } from "../constants";
 
 const STATE_RECENT_REPOS = "diffchestrator.recentRepoPaths";
 const STATE_SELECTED_REPO = "diffchestrator.selectedRepo";
+const STATE_CURRENT_ROOT = "diffchestrator.currentRoot";
 
 export class RepoManager implements vscode.Disposable {
   private _repos = new Map<string, RepoSummary>();
@@ -50,10 +51,11 @@ export class RepoManager implements vscode.Disposable {
     this._changedOnly = config.get<boolean>("changedOnlyDefault", true);
     vscode.commands.executeCommand("setContext", CTX.changedOnly, this._changedOnly);
 
-    // Restore persisted recent repos and selection
+    // Restore persisted state
     if (state) {
       this._recentRepoPaths = state.get<string[]>(STATE_RECENT_REPOS, []);
       this._selectedRepo = state.get<string | undefined>(STATE_SELECTED_REPO, undefined);
+      this._currentRoot = state.get<string | undefined>(STATE_CURRENT_ROOT, undefined);
       if (this._selectedRepo) {
         vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, true);
       }
@@ -61,12 +63,41 @@ export class RepoManager implements vscode.Disposable {
   }
 
   get repos(): RepoSummary[] {
+    const all = [...this._repos.values()];
+    if (!this._tagFilter) return all;
+    const config = vscode.workspace.getConfiguration("diffchestrator");
+    const tags: Record<string, string[]> = config.get("repoTags", {});
+    const tagged = new Set(tags[this._tagFilter] ?? []);
+    return all.filter((r) => tagged.has(r.path));
+  }
+
+  get allRepos(): RepoSummary[] {
     return [...this._repos.values()];
+  }
+
+  setTagFilter(tag: string | undefined): void {
+    this._tagFilter = tag;
+    this._onDidChangeRepos.fire();
+  }
+
+  get activeTagFilter(): string | undefined {
+    return this._tagFilter;
+  }
+
+  restoreRecent(recent: string[], selected?: string): void {
+    this._recentRepoPaths = recent;
+    this._selectedRepo = selected;
+    if (selected) {
+      vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, true);
+    }
+    this._persistState();
+    this._onDidChangeSelection.fire();
   }
   private _persistState(): void {
     if (!this._state) return;
     this._state.update(STATE_RECENT_REPOS, this._recentRepoPaths);
     this._state.update(STATE_SELECTED_REPO, this._selectedRepo);
+    this._state.update(STATE_CURRENT_ROOT, this._currentRoot);
   }
 
   get selectedRepo(): string | undefined {
@@ -91,6 +122,8 @@ export class RepoManager implements vscode.Disposable {
   get windowFocused(): boolean {
     return this._windowFocused;
   }
+
+  private _tagFilter: string | undefined;
 
   set fileWatcher(fw: { suppressRefresh(repoPath: string, ms?: number): void }) {
     this._fileWatcher = fw;

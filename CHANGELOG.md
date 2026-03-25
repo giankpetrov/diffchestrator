@@ -2,6 +2,89 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.39.1
+
+### Bug Fixes
+- clone snapshots config before mutating on delete
+
+## 0.39.0
+
+### Features
+- show tag indicators on repos and active filter in view title
+
+## 0.38.0
+
+### Features
+- add Ctrl+D shortcuts for branch cleanup and tag filter
+
+## 0.37.0
+
+### Features
+- add Ctrl+D, K shortcut for keyboard cheatsheet
+
+## 0.36.0
+
+### Features
+- 8 new features — auto-push, copy info, shortcuts, activity log, and more
+
+### Other
+- remove toast test file
+- verify commit toast actions
+
+## 0.35.1
+
+### Bug Fixes
+- remove "View Changes" from commit notifications
+
+## 0.35.0
+
+### Features
+- open terminal at scan root path
+
+## 0.34.0
+
+### Features
+- persist current root across reloads
+
+## 0.33.0
+
+### Features
+- show current root name in Active Repos view description
+
+## 0.32.0
+
+### Features
+- show current root name in Repositories view description
+
+### Other
+- remove diff test file
+- diff auto-close
+- add file for diff refresh test
+
+## 0.31.4
+
+### Bug Fixes
+- auto-close stale diff tabs when repo becomes clean after commit
+
+### Other
+- verify diff refresh after CLI commit
+- add diff refresh test file
+
+## 0.31.3
+
+### Bug Fixes
+- refresh stale diff viewer after CLI commits
+
+## 0.31.2
+
+### Bug Fixes
+- distinguish local-only repos from real fetch failures
+
+## 0.31.1
+
+### Bug Fixes
+- log fetch/pull errors per repo with Show Log action
+
 ## 0.31.0
 
 ### Features
