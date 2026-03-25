@@ -19,6 +19,14 @@ test("basename", () => {
   // Current/Parent directory
   assert.strictEqual(basename("."), ".");
   assert.strictEqual(basename(".."), "..");
+
+  // Hidden files
+  assert.strictEqual(basename(".hidden"), ".hidden");
+  assert.strictEqual(basename("foo/.hidden"), ".hidden");
+
+  // Multi-extension files
+  assert.strictEqual(basename("archive.tar.gz"), "archive.tar.gz");
+  assert.strictEqual(basename("foo/archive.tar.gz"), "archive.tar.gz");
 });
 
 test("dirname", () => {
