@@ -66,6 +66,8 @@ export const CMD = {
   setRepoTag: "diffchestrator.setRepoTag",
   saveSnapshot: "diffchestrator.saveSnapshot",
   loadSnapshot: "diffchestrator.loadSnapshot",
+  undoCommit: "diffchestrator.undoCommit",
+  fetchRepo: "diffchestrator.fetchRepo",
 } as const;
 
 export const CONFIG = {

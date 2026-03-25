@@ -282,6 +282,13 @@ export class GitExecutor {
     return result.stdout.trim() || "HEAD";
   }
 
+  async resetSoft(repoPath: string, ref = "HEAD~1"): Promise<void> {
+    const result = await this._run(["reset", "--soft", ref], repoPath);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || "Reset failed");
+    }
+  }
+
   async getRemoteUrl(repoPath: string): Promise<string | undefined> {
     const result = await this._run(
       ["remote", "get-url", "origin"],

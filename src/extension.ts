@@ -30,6 +30,22 @@ import { showTerminalIfExists, findRepoForTerminal } from "./commands/terminal";
 import * as path from "path";
 
 export function activate(context: vscode.ExtensionContext): void {
+  // Check git is installed
+  const { execFileSync } = require("child_process");
+  try {
+    execFileSync("git", ["--version"]);
+  } catch {
+    vscode.window.showErrorMessage(
+      "Diffchestrator: Git is not installed or not on PATH. The extension requires git to function.",
+      "Install Git"
+    ).then((action) => {
+      if (action === "Install Git") {
+        vscode.env.openExternal(vscode.Uri.parse("https://git-scm.com/downloads"));
+      }
+    });
+    return;
+  }
+
   const repoManager = new RepoManager(context.workspaceState);
   context.subscriptions.push(repoManager);
 
@@ -509,6 +525,9 @@ export function activate(context: vscode.ExtensionContext): void {
         { label: "Ctrl+D, K", description: "Show this cheatsheet" },
         { label: "Ctrl+D, X", description: "Clean up merged branches" },
         { label: "Ctrl+D, I", description: "Filter repos by tag" },
+        { label: "Ctrl+D, Z", description: "Undo last commit (soft reset)" },
+        { label: "Ctrl+D, Shift+B", description: "Save workspace snapshot" },
+        { label: "Ctrl+D, Shift+L", description: "Load workspace snapshot" },
       ];
       await vscode.window.showQuickPick(shortcuts, {
         placeHolder: "Diffchestrator Keyboard Shortcuts (Ctrl+D chord prefix)",
@@ -750,6 +769,63 @@ export function activate(context: vscode.ExtensionContext): void {
         fileWatcher.watchAll();
       }
       vscode.window.showInformationMessage(`Diffchestrator: Loaded snapshot "${picked._name}"`);
+    })
+  );
+
+  // Undo last commit (#41)
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.undoCommit, async (item?: any) => {
+      const repoPath = item?.repo?.path ?? item?.fullPath ?? item?.path ?? repoManager.selectedRepo;
+      if (!repoPath) {
+        vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
+        return;
+      }
+      const repoName = path.basename(repoPath);
+      try {
+        const commits = await sharedGit.log(repoPath, 1);
+        const lastMsg = commits.length > 0 ? commits[0].message : "last commit";
+        const confirm = await vscode.window.showWarningMessage(
+          `Undo "${lastMsg}" in ${repoName}? Changes will be kept as staged.`,
+          { modal: true },
+          "Undo"
+        );
+        if (confirm !== "Undo") return;
+        await sharedGit.resetSoft(repoPath);
+        await repoManager.refreshRepo(repoPath);
+        vscode.window.showInformationMessage(`Diffchestrator: Undid last commit in ${repoName}. Changes are staged.`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Diffchestrator: Undo failed: ${msg}`);
+      }
+    })
+  );
+
+  // Single-repo fetch (#42)
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.fetchRepo, async (item?: any) => {
+      const repoPath = item?.repo?.path ?? item?.fullPath ?? item?.path ?? repoManager.selectedRepo;
+      if (!repoPath) {
+        vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
+        return;
+      }
+      const repoName = path.basename(repoPath);
+      try {
+        await vscode.window.withProgress(
+          { location: vscode.ProgressLocation.Notification, title: `Diffchestrator: Fetching ${repoName}...` },
+          async () => {
+            await sharedGit.fetch(repoPath);
+            await repoManager.refreshRepo(repoPath);
+          }
+        );
+        const repo = repoManager.getRepo(repoPath);
+        const behind = repo?.behind ?? 0;
+        vscode.window.showInformationMessage(
+          `Diffchestrator: Fetched ${repoName}${behind > 0 ? ` (${behind} behind)` : " (up to date)"}`
+        );
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Diffchestrator: Fetch failed for ${repoName}: ${msg}`);
+      }
     })
   );
 

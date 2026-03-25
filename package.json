@@ -446,6 +446,18 @@
         "title": "Load Workspace Snapshot",
         "category": "Diffchestrator",
         "icon": "$(bookmark)"
+      },
+      {
+        "command": "diffchestrator.undoCommit",
+        "title": "Undo Last Commit",
+        "category": "Diffchestrator",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "diffchestrator.fetchRepo",
+        "title": "Fetch",
+        "category": "Diffchestrator",
+        "icon": "$(cloud-download)"
       }
     ],
     "menus": {
@@ -550,34 +562,44 @@
           "group": "1_actions@2"
         },
         {
-          "command": "diffchestrator.aiCommit",
+          "command": "diffchestrator.fetchRepo",
           "when": "viewItem == repo",
           "group": "1_actions@3"
         },
         {
-          "command": "diffchestrator.commitHistory",
+          "command": "diffchestrator.aiCommit",
           "when": "viewItem == repo",
           "group": "1_actions@4"
         },
         {
-          "command": "diffchestrator.switchBranch",
+          "command": "diffchestrator.undoCommit",
           "when": "viewItem == repo",
           "group": "1_actions@5"
         },
         {
-          "command": "diffchestrator.stash",
+          "command": "diffchestrator.commitHistory",
           "when": "viewItem == repo",
           "group": "1_actions@6"
         },
         {
-          "command": "diffchestrator.browseFiles",
+          "command": "diffchestrator.switchBranch",
           "when": "viewItem == repo",
           "group": "1_actions@7"
         },
         {
-          "command": "diffchestrator.grepInRepo",
+          "command": "diffchestrator.stash",
           "when": "viewItem == repo",
           "group": "1_actions@8"
+        },
+        {
+          "command": "diffchestrator.browseFiles",
+          "when": "viewItem == repo",
+          "group": "1_actions@9"
+        },
+        {
+          "command": "diffchestrator.grepInRepo",
+          "when": "viewItem == repo",
+          "group": "1_actions@10"
         },
         {
           "command": "diffchestrator.searchInRepo",
@@ -801,6 +823,21 @@
         "command": "diffchestrator.filterByTag",
         "key": "ctrl+d i",
         "mac": "cmd+d i"
+      },
+      {
+        "command": "diffchestrator.undoCommit",
+        "key": "ctrl+d z",
+        "mac": "cmd+d z"
+      },
+      {
+        "command": "diffchestrator.saveSnapshot",
+        "key": "ctrl+d shift+b",
+        "mac": "cmd+d shift+b"
+      },
+      {
+        "command": "diffchestrator.loadSnapshot",
+        "key": "ctrl+d shift+l",
+        "mac": "cmd+d shift+l"
       }
     ],
     "configuration": {
