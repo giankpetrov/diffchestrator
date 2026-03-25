@@ -180,7 +180,11 @@ export function registerFileSearchCommand(
                 }
               })
             );
-            allMatches.push(...results.flat());
+            for (const r of results) {
+              for (const item of r) {
+                allMatches.push(item);
+              }
+            }
           }
 
           if (allMatches.length === 0) {
