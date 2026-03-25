@@ -12,48 +12,57 @@ Claude Code works best when you can see what it changed, across every repo it to
 - **AI Commit** — runs `claude --permission-mode acceptEdits` in the repo's terminal for real-time output (`Ctrl+D, C`)
 - **Open Claude Code** — launches `claude -c` to continue the previous session, or `claude --add-dir` for multiple selected repos (`Ctrl+D, L`)
 - **Yolo** — opens terminal and runs the `yolo` alias from claude-sandbox (`Ctrl+D, Y`)
+- **Claude Multi-Repo Review** — opens Claude with `--add-dir` for all repos with changes and a review prompt
 - **Ask Claude** button per diff hunk in the multi-repo diff webview
-- **Per-repo terminal tracking** — each repo tracks its own Claude, Yolo, and shell terminals independently. Switching repos auto-switches the terminal panel to the correct session.
+- **Per-repo terminal tracking** — each repo tracks its own Claude, Yolo, and shell terminals independently. Switching repos auto-switches the terminal panel to the correct session
 - **Terminal reuse** — `Ctrl+D, L` and `Ctrl+D, Y` reuse existing sessions instead of spawning new ones
+- **CLI validation** — checks that `claude` and `docker` are installed before launching terminals
 
 ### Active Repos & Workspace Switching
 - **Active Repos view** — unified sidebar section showing favorites (star icons) + recent repos (MRU, up to 10) with live terminal status indicators
 - **Toggle favorites** — star button in Active Repos title bar shows/hides favorites (filled star = visible, empty star = hidden). Hidden favorites that are active/recent remain visible as their non-favorite role
-- **Persisted across reloads** — active repos and selection survive VS Code restarts
+- **Persisted across reloads** — active repos, selection, and current scan root survive VS Code restarts
 - **Cycle repos** — `Ctrl+D, Tab` cycles through all opened repos including favorites, switching the changed files view, terminal, and diff editor in one keystroke
 - **Close active repos** — `Ctrl+D, Q` closes current, `Ctrl+D, Shift+Q` picks which to close, `Ctrl+D, Shift+Tab` closes all
 - **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Shell)
 - **Auto-switch terminal** — clicking a repo in Active Repos or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Shell)
 - **Terminal tab sync** — clicking a terminal tab (Claude, Yolo, shell) auto-selects the repo in the sidebar, opens its changed files, and adds it to Active Repos if not already there
 - **Auto-add on terminal open** — opening a terminal, Claude Code, or Yolo session for a repo automatically adds it to Active Repos
-- **Notifications** — notifies when Claude commits or modifies files in any repo, with "Show Terminal" and "View Changes" action buttons (changes notification debounced 15s to avoid mid-edit alerts)
-- **CLI validation** — checks that `claude` and `docker` are installed before launching Claude Code, AI Commit, or Yolo terminals
+- **Smart notifications** — notifies when Claude commits or modifies files. Queues notifications when VS Code is unfocused and shows a grouped summary on refocus. Commit notifications offer "Push" and "Show Terminal" actions
+- **Workspace snapshots** — save/load named profiles of your root, favorites, and recent repos
 
-### Repository Discovery
+### Repository Discovery & Organization
 - **Auto-scan** a root directory to discover all git repos (BFS, configurable depth)
 - **Switch scan root** — `Ctrl+D, Shift+S` quick pick dropdown to switch between configured roots; also available as a button in the Repositories title bar
+- **Root name in view titles** — Active Repos and Repositories views show the current root name
 - **Auto-scan workspace folders** on startup if no roots configured, and when new folders are added
 - **Skip directories** like `node_modules`, `.terraform`, `vendor`, `build`, etc. (configurable)
 - **Changed-only filter** — toggle to show only repos with uncommitted changes (`Ctrl+D, D`)
 - **Changed repos sort first** in the tree for quick access
 - **Progress indication** — shows scanning/refreshing progress in the status bar for large repo counts
+- **Repo tags** — tag repos with labels (e.g., `frontend`, `infra`, `shared`), then filter the tree by tag with `Ctrl+D, I`. Tags appear as `#tag` in repo descriptions
+- **Bulk fetch** — fetch all repos at once from the Repositories title bar; distinguishes local-only repos from real failures
+- **Bulk pull** — pull all repos that are behind remote with confirmation
+- **Auto-fetch on scan** — optionally run `git fetch` during scan for accurate ahead/behind counts
 
 ### Sidebar Views (3 sections)
 - **Active Repos** — favorites (yellow/blue stars) + recently opened repos with terminal status, active repo highlighted in blue. Pin repos with `Ctrl+D, E`
-- **Changed Files** — staged/unstaged/untracked files for the selected repo, grouped by status
-- **Repositories** — hierarchical tree with common path prefix collapsing, change count badges, root switcher button
-- **View descriptions** — active repo name + branch shown next to "Changed Files" title
+- **Changed Files** — staged/unstaged/untracked files for the selected repo, grouped by status. Shows diff stats (`+N -M`) per file
+- **Repositories** — hierarchical tree with common path prefix collapsing, change count badges, tag indicators, root switcher button
+- **View descriptions** — active repo name + branch shown next to "Changed Files" title; root name + tag filter + repo count next to "Repositories"
 - **Activity bar badge** — total change count across all repos
-- **Tooltips** — hover a repo to see path, branch, change counts, ahead/behind sync status, remote URL, and last commit with relative date
+- **Tooltips** — hover a repo to see path, branch, change counts, ahead/behind sync status, stash count, remote URL, and last commit with relative date
 - **Ahead/behind badges** — `↑N ↓M` shows how many commits you are ahead/behind the remote across all views
-- **Visual highlights** — active repo (blue icon + ●), multi-selected (purple check + ✓), repos with changes (yellow), clean repos (green)
+- **Health badges** — orange cloud icon for repos behind remote, archive icon with count for stashes
+- **Visual highlights** — active repo (blue icon + ●), multi-selected (purple check + ✓), repos with changes (yellow), behind remote (orange), clean repos (green)
 
 ### Diff Viewing & Review Workflow
 - Click a changed file to open VS Code's **native diff editor** (split view with syntax highlighting)
 - **Navigate changed files** — `Ctrl+D, N` / `Shift+N` or ↑↓ buttons in editor title bar to browse files without staging
 - **Auto-advance on stage** — staging a file automatically opens the next pending file's diff, enabling a review-then-stage workflow
 - **Works from sidebar and editor title bar** — both stage buttons advance to the next file
-- **Auto-close stale diffs** — switching to a repo with no changes closes the previous repo's diff
+- **Auto-close stale diffs** — switching to a repo with no changes closes the previous repo's diff; committing a repo's last change auto-closes the diff tab
+- **Auto-refresh diffs** — diff content refreshes after CLI commits (no stale content)
 - **Context restore** — switching back to a repo reopens the last file you were viewing (changes take priority over remembered files)
 - **Multi-repo diff webview** — aggregated diffs across multiple selected repos with react-diff-view
 - Per-file stage/unstage controls in the diff view
@@ -61,16 +70,21 @@ Claude Code works best when you can see what it changed, across every repo it to
 
 ### Git Operations
 - **Stage / Unstage** individual files or all files (inline buttons + context menu + editor title bar)
-- **Discard changes** — revert a single file or all changes with confirmation dialog
-- **Commit** with message input box
-- **Push** with progress notification
+- **Discard changes** — revert a single file, delete an untracked file, or discard all changes with confirmation dialog
+- **Commit** with conventional commit prefix picker (feat/fix/chore/refactor/docs/test/ci) (`Ctrl+D, M`)
+- **Auto-push after commit** — optionally push immediately after a successful commit
+- **Push** with progress notification (`Ctrl+D, P`)
 - **Pull** with progress notification (`Ctrl+D, U`)
 - **Bulk commit/push** across multiple selected repos
+- **Copy repo info** — right-click to copy path, branch, remote URL, or name to clipboard
+- **Open remote URL** — right-click to open the repo's GitHub/GitLab page in browser (auto-converts `git@` SSH URLs to HTTPS)
 
 ### Branch & Stash Management
 - **Branch Switcher** (`Ctrl+D, B`) — QuickPick listing all local branches with current branch marked, plus "Create new branch..." option
+- **Branch Cleanup** (`Ctrl+D, X`) — find merged branches across all repos and delete them in bulk
 - **Stash Management** (`Ctrl+D, A`) — stash push (with message), list stashes, pop latest, apply specific stash, view stash diffs
 - **Commit History** (`Ctrl+D, H`) — QuickPick showing last 15 commits, select to view full diff in editor
+- **Cross-repo Activity Log** — recent commits across ALL repos sorted by date
 
 ### Search & Navigation
 - **Search in Repo** (`Ctrl+D, /`) — live git grep QuickPick scoped to the selected repo, opens file at matched line
@@ -114,15 +128,18 @@ All shortcuts use **Ctrl+D** as a chord prefix — press `Ctrl+D`, release, then
 | `Ctrl+D, Shift+Q` | Pick which active repo to close |
 | `Ctrl+D, N` | Next changed file |
 | `Ctrl+D, Shift+N` | Previous changed file |
+| `Ctrl+D, M` | Commit with message (conventional prefix picker) |
 | `Ctrl+D, C` | AI Commit (Claude) |
 | `Ctrl+D, L` | Open Claude Code (continues session) |
 | `Ctrl+D, Y` | Yolo (Claude Sandbox) |
 | `Ctrl+D, S` | Scan for repositories |
+| `Ctrl+D, Shift+S` | Switch scan root |
+| `Ctrl+D, Shift+T` | Open terminal at scan root |
+| `Ctrl+D, T` | Open terminal at repo |
 | `Ctrl+D, R` | Switch active repo |
 | `Ctrl+D, F` | Browse files in repo |
 | `Ctrl+D, P` | Push |
 | `Ctrl+D, U` | Pull |
-| `Ctrl+D, T` | Open terminal at repo |
 | `Ctrl+D, D` | Toggle changed-only filter |
 | `Ctrl+D, H` | Commit history |
 | `Ctrl+D, B` | Switch branch |
@@ -133,8 +150,9 @@ All shortcuts use **Ctrl+D** as a chord prefix — press `Ctrl+D`, release, then
 | `Ctrl+D, .` | Search active repos |
 | `Ctrl+D, Shift+/` | Search all repos |
 | `Ctrl+D, W` | Open repo in new VS Code window |
-| `Ctrl+D, Shift+S` | Switch scan root |
-| `Ctrl+D, M` | Commit with message |
+| `Ctrl+D, K` | Show keyboard shortcut cheatsheet |
+| `Ctrl+D, X` | Clean up merged branches |
+| `Ctrl+D, I` | Filter repos by tag |
 
 > On macOS, use `Cmd+D` instead of `Ctrl+D`.
 
@@ -146,6 +164,7 @@ Right-click a **repository** in the tree:
 - Commit History / Switch Branch / Stash Management
 - Browse Files / Open Repo in New Window
 - Open Terminal / Open Claude Code / Yolo
+- Copy Repo Info / Open Remote in Browser / Set Tags
 - Toggle Favorite / Select (for multi-repo operations)
 
 Right-click a **directory** in the tree:
@@ -180,11 +199,15 @@ Right-click a **changed file**:
 | `diffchestrator.claudePermissionMode` | `acceptEdits` | Permission mode for Claude CLI |
 | `diffchestrator.showInlineBlame` | `true` | Show inline git blame on current line |
 | `diffchestrator.showFavorites` | `true` | Show favorites in Active Repos view |
+| `diffchestrator.fetchOnScan` | `false` | Auto-fetch during scan for accurate ahead/behind counts |
+| `diffchestrator.autoPushAfterCommit` | `false` | Auto-push after successful commit via `Ctrl+D, M` |
 | `diffchestrator.favorites` | `[]` | Persisted favorite paths (managed by extension) |
+| `diffchestrator.repoTags` | `{}` | Repo tags for filtering (managed by extension) |
+| `diffchestrator.snapshots` | `{}` | Workspace snapshots (managed by extension) |
 
 ## Getting Started
 
-1. Install the extension (F5 to run in development, or package with `vsce`)
+1. Install the extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=andrevops-com.diffchestrator) or build locally with `make package`
 2. Add your project root to settings:
    ```json
    {
@@ -195,17 +218,20 @@ Right-click a **changed file**:
 3. The extension auto-scans on startup and populates the sidebar
 4. Click a repo to see its changed files, click a file to see the diff
 5. Use `Ctrl+D, C` to AI commit with Claude, `Ctrl+D, L` to open Claude Code
+6. Press `Ctrl+D, K` to see all keyboard shortcuts
 
 ## Release
 
 ```bash
-npm run release          # Auto-detect bump from conventional commits
-npm run release:patch    # Force patch bump
-npm run release:minor    # Force minor bump
-npm run release:major    # Force major bump
+make release          # Auto-detect bump from conventional commits
+make release-patch    # Force patch bump
+make release-minor    # Force minor bump
+make release-major    # Force major bump
+make install          # Install latest .vsix locally
+make clean            # Remove build artifacts
 ```
 
-The release script reads commit messages since the last `v*` tag, picks the semver bump (`feat:` = minor, `fix:` = patch, `BREAKING CHANGE` = major), commits the version bump, tags, builds, and packages the `.vsix`.
+The release script reads commit messages since the last `v*` tag, picks the semver bump (`feat:` = minor, `fix:` = patch, `BREAKING CHANGE` = major), updates CHANGELOG.md, commits the version bump, tags, builds, and packages the `.vsix`.
 
 ## Development
 
@@ -215,9 +241,9 @@ npm install
 cd webview-ui && npm install && cd ..
 
 # Build
-npm run build          # Extension + webview
-npm run compile        # Extension only
-npm run build:webview  # Webview only
+make build           # Extension + webview
+make compile         # Extension only (fast)
+make watch           # Watch mode
 
 # Debug
 # Press F5 in VS Code to launch Extension Host
@@ -232,35 +258,35 @@ src/
 ├── types.ts                  # Shared TypeScript interfaces
 ├── git/
 │   ├── gitExecutor.ts        # Git CLI wrapper (child_process.execFile)
-│   │                         # status, diff, stage, unstage, commit, push, pull,
+│   │                         # status, diff, stage, unstage, commit, push, pull, fetch,
 │   │                         # log, branches, checkout, stash, blame, show, clean, grep
 │   └── scanner.ts            # BFS directory scanner
 ├── providers/
 │   ├── activeReposProvider.ts # Favorites + recent repos with terminal indicators
-│   ├── repoTreeProvider.ts   # Repo tree with active/selected highlights + tooltips
-│   ├── changedFilesProvider.ts
+│   ├── repoTreeProvider.ts   # Repo tree with health badges + tag indicators + tooltips
+│   ├── changedFilesProvider.ts # Changed files with diff stats
 │   └── gitContentProvider.ts # TextDocumentContentProvider for diff/show URIs
 ├── commands/
 │   ├── scan.ts               # Scan/rescan
 │   ├── stage.ts              # Stage/unstage file + all + auto-advance
-│   ├── commit.ts             # Commit (single + bulk)
+│   ├── commit.ts             # Commit with prefix picker (single + bulk) + auto-push
 │   ├── push.ts               # Push (single + bulk)
 │   ├── pull.ts               # Pull with progress
-│   ├── aiCommit.ts           # Claude CLI AI commit (runs in terminal)
+│   ├── aiCommit.ts           # Claude CLI AI commit with .git watcher
 │   ├── openClaude.ts         # Open Claude Code terminal (per-repo tracking)
-│   ├── terminal.ts           # Terminal management (shell/claude/yolo per repo)
+│   ├── terminal.ts           # Terminal management + CLI validation
 │   ├── favorites.ts          # Toggle favorites + favorite current repo
 │   ├── fileSearch.ts         # Browse files + switch repo + open in new window
 │   ├── commitHistory.ts      # Commit history viewer
-│   ├── discard.ts            # Discard file/all changes
+│   ├── discard.ts            # Discard file/all changes (tracked + untracked)
 │   ├── switchBranch.ts       # Branch switcher + create
 │   └── stash.ts              # Stash push/list/pop/apply
 ├── services/
-│   ├── repoManager.ts        # Central state + MRU recent repos + cycle
-│   ├── fileWatcher.ts        # Per-repo filesystem watcher
-│   ├── statusBar.ts          # Status bar items
+│   ├── repoManager.ts        # Central state + MRU + cycle + tag filter + snapshots
+│   ├── fileWatcher.ts        # .git directory watcher with suppression
+│   ├── statusBar.ts          # Status bar items with debounce
 │   ├── inlineBlame.ts        # Current-line git blame decorations
-│   └── workspaceAutoScan.ts  # Auto-scan workspace folders
+│   └── workspaceAutoScan.ts  # Auto-scan workspace folders (async)
 ├── views/
 │   └── diffWebviewPanel.ts   # Multi-repo diff webview
 └── utils/
@@ -275,7 +301,7 @@ webview-ui/                   # React app for multi-repo diff
 └── vite.config.ts            # Builds to dist/webview/
 
 scripts/
-└── release.mjs               # Auto-detect semver bump + commit + tag + build
+└── release.mjs               # Auto-detect semver bump + changelog + commit + tag + build
 ```
 
 ## Tech Stack
@@ -284,4 +310,5 @@ scripts/
 - **Git**: `child_process.execFile` (no shell=true)
 - **Webview**: React 19, Vite, react-diff-view
 - **AI**: Claude Code CLI integration
+- **CI/CD**: GitHub Actions for building and releasing
 - **No backend server** — everything runs in-process via the VS Code extension host
