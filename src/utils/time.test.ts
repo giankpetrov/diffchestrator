@@ -1,6 +1,35 @@
 import * as assert from "node:assert";
 import { test } from "node:test";
-import { timeAgoShort } from "./time.ts";
+import { timeAgo, timeAgoShort } from "./time.ts";
+
+test("timeAgo", () => {
+  const now = Date.now();
+
+  // Create relative dates
+  const justNow = new Date(now - 10 * 1000).toISOString(); // 10 seconds ago
+  const minuteAgo = new Date(now - 1 * 60 * 1000).toISOString(); // 1 minute ago
+  const minutesAgo = new Date(now - 5 * 60 * 1000).toISOString(); // 5 minutes ago
+  const hourAgo = new Date(now - 1 * 60 * 60 * 1000).toISOString(); // 1 hour ago
+  const hoursAgo = new Date(now - 3 * 60 * 60 * 1000).toISOString(); // 3 hours ago
+  const dayAgo = new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString(); // 1 day ago
+  const daysAgo = new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString(); // 4 days ago
+  const weekAgo = new Date(now - 1 * 7 * 24 * 60 * 60 * 1000).toISOString(); // 1 week ago
+  const weeksAgo = new Date(now - 2 * 7 * 24 * 60 * 60 * 1000).toISOString(); // 2 weeks ago
+  const monthAgo = new Date(now - 1 * 30 * 24 * 60 * 60 * 1000).toISOString(); // 1 month ago
+  const monthsAgo = new Date(now - 3 * 30 * 24 * 60 * 60 * 1000).toISOString(); // 3 months ago
+
+  assert.strictEqual(timeAgo(justNow), "just now");
+  assert.strictEqual(timeAgo(minuteAgo), "1 minute ago");
+  assert.strictEqual(timeAgo(minutesAgo), "5 minutes ago");
+  assert.strictEqual(timeAgo(hourAgo), "1 hour ago");
+  assert.strictEqual(timeAgo(hoursAgo), "3 hours ago");
+  assert.strictEqual(timeAgo(dayAgo), "1 day ago");
+  assert.strictEqual(timeAgo(daysAgo), "4 days ago");
+  assert.strictEqual(timeAgo(weekAgo), "1 week ago");
+  assert.strictEqual(timeAgo(weeksAgo), "2 weeks ago");
+  assert.strictEqual(timeAgo(monthAgo), "1 month ago");
+  assert.strictEqual(timeAgo(monthsAgo), "3 months ago");
+});
 
 test("timeAgoShort", () => {
   const now = Date.now();
