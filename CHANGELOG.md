@@ -2,6 +2,23 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.41.0
+
+### Features
+- optimize bulk commit with Promise.all batched concurrency
+
+### Bug Fixes
+- smart push on notifications, select/deselect all active repos
+
+### Performance
+- Batch close tabs in repo refresh and selection to improve performance
+
+### Other
+- add test for timeAgoShort in src/utils/time.ts
+- validate git refs, harden branch commands, cache hot paths
+- ⚡ Optimize _getTerminalKinds with lazy caching
+- update README with undo commit, single fetch, snapshot shortcuts, git detection
+
 ## 0.40.1
 
 ### Other
