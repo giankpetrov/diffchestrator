@@ -127,6 +127,9 @@ export class RepoManager implements vscode.Disposable {
     this._state.update(STATE_CURRENT_ROOT, this._currentRoot);
   }
 
+  get selectedRepoPaths(): ReadonlySet<string> {
+    return this._selectedRepoPaths;
+  }
   get selectedRepo(): string | undefined {
     return this._selectedRepo;
   }
