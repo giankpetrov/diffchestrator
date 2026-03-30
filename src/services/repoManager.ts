@@ -174,7 +174,9 @@ export class RepoManager implements vscode.Disposable {
     this._repos.clear();
     this._activeRepoPathsCache = undefined;
     this._selectedRepo = undefined;
+    this._selectedRepoPaths.clear();
     vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, false);
+    vscode.commands.executeCommand("setContext", CTX.hasMultiSelection, false);
     this._onDidChangeSelection.fire();
     const config = vscode.workspace.getConfiguration("diffchestrator");
     const maxDepth = config.get<number>("scanMaxDepth", 6);
