@@ -15,6 +15,7 @@ export class RepoManager implements vscode.Disposable {
   private _selectedRepo: string | undefined;
   private _selectedRepoPaths = new Set<string>();
   private _recentRepoPaths: string[] = [];
+  private _selectionPerRoot = new Map<string, { selected?: string; multi: string[]; recent: string[] }>();
   private _state: vscode.Memento | undefined;
   private _currentRoot: string | undefined;
   private _changedOnly: boolean;
@@ -170,13 +171,33 @@ export class RepoManager implements vscode.Disposable {
   }
 
   async scan(rootPath: string): Promise<void> {
+    // Save current root's selection state before switching
+    if (this._currentRoot) {
+      this._selectionPerRoot.set(this._currentRoot, {
+        selected: this._selectedRepo,
+        multi: [...this._selectedRepoPaths],
+        recent: [...this._recentRepoPaths],
+      });
+    }
+
     this._currentRoot = rootPath;
     this._repos.clear();
     this._activeRepoPathsCache = undefined;
-    this._selectedRepo = undefined;
-    this._selectedRepoPaths.clear();
-    vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, false);
-    vscode.commands.executeCommand("setContext", CTX.hasMultiSelection, false);
+
+    // Restore previous selection for this root (if any)
+    const saved = this._selectionPerRoot.get(rootPath);
+    if (saved) {
+      this._selectedRepo = saved.selected;
+      this._selectedRepoPaths = new Set(saved.multi);
+      this._recentRepoPaths = saved.recent;
+      vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, !!saved.selected);
+      vscode.commands.executeCommand("setContext", CTX.hasMultiSelection, saved.multi.length > 0);
+    } else {
+      this._selectedRepo = undefined;
+      this._selectedRepoPaths.clear();
+      vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, false);
+      vscode.commands.executeCommand("setContext", CTX.hasMultiSelection, false);
+    }
     this._onDidChangeSelection.fire();
     const config = vscode.workspace.getConfiguration("diffchestrator");
     const maxDepth = config.get<number>("scanMaxDepth", 6);
