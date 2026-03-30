@@ -30,6 +30,15 @@ test("timeAgo", () => {
   assert.strictEqual(timeAgo(monthsAgo), "3 months ago");
 });
 
+test("timeAgo with invalid or future dates", () => {
+  const now = Date.now();
+  const futureDate = new Date(now + 10 * 60 * 1000).toISOString(); // 10 minutes in the future
+
+  assert.strictEqual(timeAgo(futureDate), "just now");
+  assert.strictEqual(timeAgo("invalid-date-string"), "just now");
+  assert.strictEqual(timeAgo(""), "just now");
+});
+
 test("timeAgoShort", () => {
   const now = Date.now();
 
@@ -47,4 +56,13 @@ test("timeAgoShort", () => {
   assert.strictEqual(timeAgoShort(daysAgo), "4d ago");
   assert.strictEqual(timeAgoShort(weeksAgo), "2w ago");
   assert.strictEqual(timeAgoShort(monthsAgo), "3mo ago");
+});
+
+test("timeAgoShort with invalid or future dates", () => {
+  const now = Date.now();
+  const futureDate = new Date(now + 10 * 60 * 1000).toISOString(); // 10 minutes in the future
+
+  assert.strictEqual(timeAgoShort(futureDate), "just now");
+  assert.strictEqual(timeAgoShort("invalid-date-string"), "just now");
+  assert.strictEqual(timeAgoShort(""), "just now");
 });
