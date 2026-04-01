@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.45.3
+
+### Bug Fixes
+- make swap command explicitly sequential — root, repo, terminal, diff
+
 ## 0.45.2
 
 ### Bug Fixes
