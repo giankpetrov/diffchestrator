@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.45.1
+
+### Bug Fixes
+- swap repo now toggles correctly between two positions across roots
+
 ## 0.45.0
 
 ### Features
