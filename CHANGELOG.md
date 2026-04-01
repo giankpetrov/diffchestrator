@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.44.1
+
+### Bug Fixes
+- invalidate status cache on every refresh to keep badge and file list fresh
+
 ## 0.44.0
 
 ### Features
