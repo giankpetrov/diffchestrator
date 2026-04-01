@@ -16,7 +16,8 @@ export class RepoManager implements vscode.Disposable {
   private _selectedRepoPaths = new Set<string>();
   private _recentRepoPaths: string[] = [];
   private _selectionPerRoot = new Map<string, { selected?: string; multi: string[]; recent: string[] }>();
-  private _previousRepo: { path: string; root?: string } | undefined;
+  private _swapTarget: { path: string; root?: string } | undefined;
+  private _swappingBack = false;
   private _state: vscode.Memento | undefined;
   private _currentRoot: string | undefined;
   private _changedOnly: boolean;
@@ -352,13 +353,26 @@ export class RepoManager implements vscode.Disposable {
 
   private _freezeMru = false;
 
-  get previousRepo(): { path: string; root?: string } | undefined {
-    return this._previousRepo;
+  get swapTarget(): { path: string; root?: string } | undefined {
+    return this._swapTarget;
+  }
+
+  setSwapTarget(target: { path: string; root?: string }): void {
+    this._swapTarget = target;
+  }
+
+  beginSwap(): void {
+    this._swappingBack = true;
+  }
+
+  endSwap(): void {
+    this._swappingBack = false;
   }
 
   selectRepo(repoPath: string): void {
-    if (this._selectedRepo && this._selectedRepo !== repoPath) {
-      this._previousRepo = { path: this._selectedRepo, root: this._currentRoot };
+    // Track swap target: save current position before switching (skip during swap-back)
+    if (!this._swappingBack && this._selectedRepo && this._selectedRepo !== repoPath) {
+      this._swapTarget = { path: this._selectedRepo, root: this._currentRoot };
     }
     this._selectedRepo = repoPath;
     // Track recent repos (MRU order, capped at 10) — skip re-sort during cycle
