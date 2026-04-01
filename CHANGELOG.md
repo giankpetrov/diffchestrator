@@ -2,6 +2,57 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.45.4
+
+### Bug Fixes
+- set swap target in scan() before clearing selection
+
+## 0.45.3
+
+### Bug Fixes
+- make swap command explicitly sequential — root, repo, terminal, diff
+
+## 0.45.2
+
+### Bug Fixes
+- force UI refresh after swap to update Active Repos view
+
+## 0.45.1
+
+### Bug Fixes
+- swap repo now toggles correctly between two positions across roots
+
+## 0.45.0
+
+### Features
+- swap to previous repo across roots with Alt+D, Backspace
+
+## 0.44.1
+
+### Bug Fixes
+- invalidate status cache on every refresh to keep badge and file list fresh
+
+## 0.44.0
+
+### Features
+- persist selection per root when switching scan roots
+
+## 0.43.1
+
+### Bug Fixes
+- clear multi-selection when switching scan roots
+
+## 0.43.0
+
+### Features
+- yolo command sends all selected repo paths in multi-select mode
+
+### Other
+- add comprehensive coverage and error handling for DisposableStore
+- expand coverage for dirname utility
+- 🧪 Add edge case tests for timeAgo
+- add edge case tests for timeAgoShort function
+
 ## 0.42.7
 
 ### Bug Fixes

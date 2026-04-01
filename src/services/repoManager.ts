@@ -15,6 +15,9 @@ export class RepoManager implements vscode.Disposable {
   private _selectedRepo: string | undefined;
   private _selectedRepoPaths = new Set<string>();
   private _recentRepoPaths: string[] = [];
+  private _selectionPerRoot = new Map<string, { selected?: string; multi: string[]; recent: string[] }>();
+  private _swapTarget: { path: string; root?: string } | undefined;
+  private _swappingBack = false;
   private _state: vscode.Memento | undefined;
   private _currentRoot: string | undefined;
   private _changedOnly: boolean;
@@ -170,11 +173,38 @@ export class RepoManager implements vscode.Disposable {
   }
 
   async scan(rootPath: string): Promise<void> {
+    // Save current root's selection state before switching
+    if (this._currentRoot) {
+      this._selectionPerRoot.set(this._currentRoot, {
+        selected: this._selectedRepo,
+        multi: [...this._selectedRepoPaths],
+        recent: [...this._recentRepoPaths],
+      });
+    }
+
+    // Save swap target before clearing selection (so swap works after root switch)
+    if (!this._swappingBack && this._selectedRepo) {
+      this._swapTarget = { path: this._selectedRepo, root: this._currentRoot };
+    }
+
     this._currentRoot = rootPath;
     this._repos.clear();
     this._activeRepoPathsCache = undefined;
-    this._selectedRepo = undefined;
-    vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, false);
+
+    // Restore previous selection for this root (if any)
+    const saved = this._selectionPerRoot.get(rootPath);
+    if (saved) {
+      this._selectedRepo = saved.selected;
+      this._selectedRepoPaths = new Set(saved.multi);
+      this._recentRepoPaths = saved.recent;
+      vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, !!saved.selected);
+      vscode.commands.executeCommand("setContext", CTX.hasMultiSelection, saved.multi.length > 0);
+    } else {
+      this._selectedRepo = undefined;
+      this._selectedRepoPaths.clear();
+      vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, false);
+      vscode.commands.executeCommand("setContext", CTX.hasMultiSelection, false);
+    }
     this._onDidChangeSelection.fire();
     const config = vscode.workspace.getConfiguration("diffchestrator");
     const maxDepth = config.get<number>("scanMaxDepth", 6);
@@ -216,6 +246,8 @@ export class RepoManager implements vscode.Disposable {
   async refreshRepo(repoPath: string): Promise<void> {
     // Suppress file watcher to avoid double refresh
     this._fileWatcher?.suppressRefresh(repoPath);
+    // Invalidate status cache so Changed Files view gets fresh data
+    this._git.invalidateStatus(repoPath);
     try {
       // shortStatus now returns branch too — single git process instead of two
       const s = await this._git.shortStatus(repoPath);
@@ -326,7 +358,27 @@ export class RepoManager implements vscode.Disposable {
 
   private _freezeMru = false;
 
+  get swapTarget(): { path: string; root?: string } | undefined {
+    return this._swapTarget;
+  }
+
+  setSwapTarget(target: { path: string; root?: string }): void {
+    this._swapTarget = target;
+  }
+
+  beginSwap(): void {
+    this._swappingBack = true;
+  }
+
+  endSwap(): void {
+    this._swappingBack = false;
+  }
+
   selectRepo(repoPath: string): void {
+    // Track swap target: save current position before switching (skip during swap-back)
+    if (!this._swappingBack && this._selectedRepo && this._selectedRepo !== repoPath) {
+      this._swapTarget = { path: this._selectedRepo, root: this._currentRoot };
+    }
     this._selectedRepo = repoPath;
     // Track recent repos (MRU order, capped at 10) — skip re-sort during cycle
     if (!this._freezeMru) {

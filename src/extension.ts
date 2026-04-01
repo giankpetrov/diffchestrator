@@ -875,6 +875,59 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // Swap between current and previous repo (works across roots)
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CMD.swapRepo, async () => {
+      const target = repoManager.swapTarget;
+      if (!target) {
+        vscode.window.showInformationMessage("Diffchestrator: No previous repo to swap to.");
+        return;
+      }
+      // Save where we are now before swapping
+      const current = repoManager.selectedRepo;
+      const currentRoot = repoManager.currentRoot;
+
+      repoManager.beginSwap();
+      try {
+        // Step 1: Switch root if needed (and wait for it to fully complete)
+        if (target.root && target.root !== repoManager.currentRoot) {
+          await repoManager.scan(target.root);
+          fileWatcher.watchAll();
+          // Wait for coalesced events to settle
+          await new Promise((r) => setTimeout(r, 100));
+        }
+
+        // Step 2: Select the repo
+        repoManager.selectRepo(target.path);
+
+        // Step 3: Focus changed files view
+        await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+
+        // Step 4: Switch terminal
+        await showTerminalIfExists(target.path);
+
+        // Step 5: Open first changed file if any
+        try {
+          const status = await sharedGit.status(target.path);
+          const firstFile = status.unstaged[0] ?? status.untracked[0] ?? status.staged[0];
+          if (firstFile) {
+            await openFileDiff(target.path, firstFile);
+          }
+        } catch { /* non-critical */ }
+      } finally {
+        repoManager.endSwap();
+      }
+
+      // Set swap target to where we just came from
+      if (current) {
+        repoManager.setSwapTarget({ path: current, root: currentRoot });
+      }
+
+      // Force UI refresh
+      updateViewInfo();
+    })
+  );
+
   // Close active repo from recent list
   context.subscriptions.push(
     vscode.commands.registerCommand(CMD.closeActiveRepo, async () => {
