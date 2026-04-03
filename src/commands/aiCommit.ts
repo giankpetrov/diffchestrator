@@ -31,10 +31,15 @@ export function registerAiCommitCommands(
         if (!(await validateCli("claude"))) return;
 
         const config = vscode.workspace.getConfiguration("diffchestrator");
-        const permissionMode = config.get<string>(
+        let permissionMode = config.get<string>(
           "claudePermissionMode",
           "acceptEdits"
         );
+
+        // Prevent command injection by validating against allowed values
+        if (!["default", "acceptEdits", "full"].includes(permissionMode)) {
+          permissionMode = "acceptEdits";
+        }
 
         const terminal = getOrCreateTerminal(repoPath);
         terminal.show();
