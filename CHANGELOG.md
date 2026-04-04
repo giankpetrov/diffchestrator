@@ -2,6 +2,14 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.48.4
+
+### Bug Fixes
+- validate yolo command exists before launching, show install link
+
+### Other
+- add extension API section, fix Ctrl+D references, update architecture tree
+
 ## 0.48.3
 
 ### Other
