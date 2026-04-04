@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.48.5
+
+### Bug Fixes
+- Capitalize changelog entries in release script and CI workflow
+
 ## 0.48.4
 
 ### Bug Fixes
