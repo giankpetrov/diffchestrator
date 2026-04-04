@@ -6,6 +6,22 @@
 
 Claude Code works best when you can see what it changed, across every repo it touched. Diffchestrator gives you that visibility: a sidebar tree of all your repos, real-time change tracking, one-click diffs, and direct terminal integration with `claude`. No context switching, no manual `git status` in twelve terminals.
 
+## Diffchestrator vs Multi-Root Workspaces
+
+VS Code's multi-root workspaces let you group repos into a `.code-workspace` file for unified file browsing and search. Diffchestrator takes a different approach:
+
+| | Multi-Root Workspaces | Diffchestrator |
+|---|---|---|
+| **Setup** | Manually add each repo to a `.code-workspace` file | Auto-discovers all repos under a root directory |
+| **View** | File explorer with folders side-by-side | Git-first tree sorted by changes, with branch, ahead/behind, stash counts, and tags |
+| **Scale** | Gets unwieldy beyond ~10 repos | Designed for 20–100+ repos with changed-only filter and tag-based filtering |
+| **Switching** | Static set of repos | Switch between project groups instantly (`Alt+D, Shift+S`) |
+| **Focus** | Navigate and edit code | Orchestrate git operations — stage, commit, push, search, and review across repos |
+| **AI** | No built-in integration | Per-repo Claude Code terminals, AI commits, multi-repo Claude sessions |
+| **Cross-repo ops** | Manual per-repo git | Bulk commit/push, git grep across repos, branch cleanup, activity log |
+
+They're complementary — you can use Diffchestrator inside a multi-root workspace. A workspace says "here are my repos." Diffchestrator says "here's what changed, where, and lets you act on it."
+
 ## Features
 
 ### Claude Code Integration
