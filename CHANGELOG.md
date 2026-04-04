@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.48.6
+
+### Other
+- Add Diffchestrator vs Multi-Root Workspaces comparison
+
 ## 0.48.5
 
 ### Bug Fixes
