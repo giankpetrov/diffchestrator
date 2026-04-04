@@ -2,6 +2,31 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.48.2
+
+### Other
+- enable auto-publish to Open VSX on tag push
+
+## 0.48.1
+
+### Other
+- dual-publish to VS Code Marketplace and Open VSX
+
+## 0.48.0
+
+### Features
+- dual-publish to VS Code Marketplace and Open VSX (release script + CI workflow)
+
+## 0.47.0
+
+### Features
+- reveal repo in system file explorer with Alt+D, O
+
+## 0.46.0
+
+### Features
+- expose public API for sibling extensions (getCurrentRoot, getSelectedRepo, onDidChangeSelection)
+
 ## 0.45.4
 
 ### Bug Fixes

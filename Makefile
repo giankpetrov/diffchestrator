@@ -30,9 +30,9 @@ release-minor:
 release-major:
 	npm run release:major
 
-# Install the latest .vsix locally
+# Install the latest Marketplace .vsix locally (excludes openvsx builds)
 install:
-	@vsix=$$(ls -t diffchestrator-*.vsix 2>/dev/null | head -1); \
+	@vsix=$$(ls -t diffchestrator-*.vsix 2>/dev/null | grep -v openvsx | head -1); \
 	if [ -z "$$vsix" ]; then echo "No .vsix found. Run 'make package' first."; exit 1; fi; \
 	echo "Installing $$vsix"; \
 	code --install-extension "$$vsix" --force

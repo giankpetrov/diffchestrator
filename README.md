@@ -80,6 +80,8 @@ Claude Code works best when you can see what it changed, across every repo it to
 - **Bulk commit/push** across multiple selected repos
 - **Copy repo info** — right-click to copy path, branch, remote URL, or name to clipboard
 - **Open remote URL** — right-click to open the repo's GitHub/GitLab page in browser (auto-converts `git@` SSH URLs to HTTPS)
+- **Reveal in file explorer** — open the repo folder in your system file manager (`Alt+D, O`)
+- **Swap repo** — jump back to the previous repo across roots (`Alt+D, Backspace`)
 - **Git detection** — shows error with install link if git isn't available on PATH
 
 ### Branch & Stash Management
@@ -159,6 +161,8 @@ All shortcuts use **Alt+D** as a chord prefix — press `Alt+D`, release, then p
 | `Alt+D, Z` | Undo last commit (soft reset) |
 | `Alt+D, Shift+B` | Save workspace snapshot |
 | `Alt+D, Shift+L` | Load workspace snapshot |
+| `Alt+D, Backspace` | Swap to previous repo (across roots) |
+| `Alt+D, O` | Reveal repo in system file explorer |
 
 > On macOS, use `Alt+D` instead of `Alt+D`.
 
@@ -170,7 +174,7 @@ Right-click a **repository** in the tree:
 - Commit History / Switch Branch / Stash Management
 - Browse Files / Open Repo in New Window
 - Open Terminal / Open Claude Code / Yolo
-- Copy Repo Info / Open Remote in Browser / Set Tags
+- Copy Repo Info / Open Remote in Browser / Set Tags / Reveal in File Explorer
 - Toggle Favorite / Select (for multi-repo operations)
 
 Right-click a **directory** in the tree:
@@ -213,7 +217,7 @@ Right-click a **changed file**:
 
 ## Getting Started
 
-1. Install the extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=andrevops-com.diffchestrator) or build locally with `make package`
+1. Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=andrevops-com.diffchestrator), [Open VSX](https://open-vsx.org/extension/andrevops/diffchestrator), or build locally with `make package`
 2. Add your project root to settings:
    ```json
    {
@@ -234,10 +238,17 @@ make release-patch    # Force patch bump
 make release-minor    # Force minor bump
 make release-major    # Force major bump
 make install          # Install latest .vsix locally
+make publish          # Publish to both VS Code Marketplace and Open VSX
+make publish-marketplace  # Publish to VS Code Marketplace only
+make publish-openvsx      # Publish to Open VSX only
 make clean            # Remove build artifacts
 ```
 
-The release script reads commit messages since the last `v*` tag, picks the semver bump (`feat:` = minor, `fix:` = patch, `BREAKING CHANGE` = major), updates CHANGELOG.md, commits the version bump, tags, builds, and packages the `.vsix`.
+The release script reads commit messages since the last `v*` tag, picks the semver bump (`feat:` = minor, `fix:` = patch, `BREAKING CHANGE` = major), updates CHANGELOG.md, commits the version bump, tags, builds, and packages two `.vsix` files:
+- `diffchestrator-X.Y.Z.vsix` — VS Code Marketplace (publisher: `andrevops-com`)
+- `diffchestrator-X.Y.Z-openvsx.vsix` — Open VSX Registry (publisher: `andrevops`)
+
+Pushing a `v*` tag to GitHub triggers CI to create a GitHub Release with both files and auto-publish to Open VSX.
 
 ## Development
 
@@ -307,7 +318,7 @@ webview-ui/                   # React app for multi-repo diff
 └── vite.config.ts            # Builds to dist/webview/
 
 scripts/
-└── release.mjs               # Auto-detect semver bump + changelog + commit + tag + build
+└── release.mjs               # Auto-detect semver bump + changelog + commit + tag + dual build (Marketplace + Open VSX)
 ```
 
 ## Tech Stack
