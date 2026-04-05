@@ -15,7 +15,8 @@ export type TerminalKind = "shell" | "claude" | "yolo";
  */
 async function commandExists(cmd: string): Promise<boolean> {
   try {
-    await execFileAsync("which", [cmd]);
+    const lookup = process.platform === "win32" ? "where" : "which";
+    await execFileAsync(lookup, [cmd]);
     return true;
   } catch {
     return false;
