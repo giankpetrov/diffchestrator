@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import vscode from "../vscode";
 import type { ActivityEntry } from "./DashboardApp";
 
 interface Props {
@@ -79,6 +80,24 @@ export default function ActivityLog({ entries }: Props) {
           </button>
         )}
         <span className="activity-count">{filtered.length} commits</span>
+        {filtered.length > 0 && (
+          <>
+            <button
+              className="icon-btn"
+              onClick={() => vscode.postMessage({ type: "exportActivity", format: "clipboard", entries: filtered })}
+              title="Copy as Markdown"
+            >
+              ⎘
+            </button>
+            <button
+              className="icon-btn"
+              onClick={() => vscode.postMessage({ type: "exportActivity", format: "file", entries: filtered })}
+              title="Save as Markdown file"
+            >
+              ⬇
+            </button>
+          </>
+        )}
       </div>
 
       {filtered.length === 0 ? (

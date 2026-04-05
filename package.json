@@ -991,9 +991,54 @@
           "type": "boolean",
           "default": true,
           "description": "Show inline git blame annotation on the current line"
+        },
+        "diffchestrator.pinnedRepos": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Repository paths pinned to the top of Dashboard Sync Overview"
         }
       }
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "diffchestrator.welcome",
+        "title": "Get Started with Diffchestrator",
+        "description": "Set up multi-repo Git orchestration in a few steps.",
+        "steps": [
+          {
+            "id": "diffchestrator.welcome.intro",
+            "title": "Welcome to Diffchestrator",
+            "description": "Multi-repo Git orchestration built for Claude Code.\n\n[Open Dashboard](command:diffchestrator.dashboard)",
+            "media": { "image": "resources/icons/icon.png", "altText": "Diffchestrator" },
+            "completionEvents": ["onCommand:diffchestrator.dashboard"]
+          },
+          {
+            "id": "diffchestrator.welcome.addRoot",
+            "title": "Add a Scan Root",
+            "description": "Point Diffchestrator at a folder containing your Git repositories.\n\n[Add Scan Root](command:diffchestrator.addScanRoot)",
+            "media": { "image": "resources/icons/icon.png", "altText": "Add scan root" },
+            "completionEvents": ["onCommand:diffchestrator.addScanRoot"]
+          },
+          {
+            "id": "diffchestrator.welcome.scan",
+            "title": "Scan for Repositories",
+            "description": "Discover all Git repos under your scan root.\n\n[Scan Now](command:diffchestrator.scan)",
+            "media": { "image": "resources/icons/icon.png", "altText": "Scan repos" },
+            "completionEvents": ["onCommand:diffchestrator.scan"]
+          },
+          {
+            "id": "diffchestrator.welcome.shortcuts",
+            "title": "Learn the Shortcuts",
+            "description": "All shortcuts use **Alt+D** as a chord prefix.\n\n**Alt+D, R** Switch repo | **Alt+D, C** AI Commit | **Alt+D, V** Dashboard\n\n[View All Shortcuts](command:diffchestrator.showShortcuts)",
+            "media": { "image": "resources/icons/icon.png", "altText": "Shortcuts" },
+            "completionEvents": ["onCommand:diffchestrator.showShortcuts"]
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "build:webview": "cd webview-ui && npm run build && npm run build:dashboard",

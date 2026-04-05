@@ -11,6 +11,15 @@ interface SyncOverviewEntry {
   behind: number;
   totalChanges: number;
   stashCount: number;
+  isPinned: boolean;
+  healthScore: number;
+}
+
+function computeHealthScore(r: { totalChanges: number; ahead: number; behind: number; stashCount: number }): number {
+  const changesPenalty = Math.min(r.totalChanges * 4, 40);
+  const syncPenalty = Math.min((r.ahead + r.behind) * 5, 40);
+  const stashPenalty = Math.min(r.stashCount * 5, 20);
+  return 100 - changesPenalty - syncPenalty - stashPenalty;
 }
 
 interface BranchMapEntry {
@@ -179,6 +188,9 @@ export class DashboardWebviewPanel {
     const sinceISO = new Date(this._sessionStartTime).toISOString();
 
     // Phase 1: instant — no git calls
+    const config = vscode.workspace.getConfiguration("diffchestrator");
+    const pinnedPaths = new Set(config.get<string[]>("pinnedRepos", []));
+
     const syncOverview: SyncOverviewEntry[] = repos.map((r) => ({
       name: r.name,
       path: r.path,
@@ -187,6 +199,8 @@ export class DashboardWebviewPanel {
       behind: r.behind,
       totalChanges: r.totalChanges,
       stashCount: r.stashCount,
+      isPinned: pinnedPaths.has(r.path),
+      healthScore: computeHealthScore(r),
     }));
 
     const branchMap: BranchMapEntry[] = repos.map((r) => ({
@@ -444,6 +458,117 @@ export class DashboardWebviewPanel {
         await vscode.commands.executeCommand(CMD.filterByTag);
         await this._update();
         break;
+
+      case "pinRepo": {
+        const repoPath = msg.repoPath as string;
+        const cfg = vscode.workspace.getConfiguration("diffchestrator");
+        const pinned = cfg.get<string[]>("pinnedRepos", []);
+        if (!pinned.includes(repoPath)) {
+          pinned.push(repoPath);
+          await cfg.update("pinnedRepos", pinned, vscode.ConfigurationTarget.Global);
+        }
+        await this._update();
+        break;
+      }
+
+      case "unpinRepo": {
+        const repoPath = msg.repoPath as string;
+        const cfg = vscode.workspace.getConfiguration("diffchestrator");
+        const pinned = cfg.get<string[]>("pinnedRepos", []).filter((p) => p !== repoPath);
+        await cfg.update("pinnedRepos", pinned, vscode.ConfigurationTarget.Global);
+        await this._update();
+        break;
+      }
+
+      case "exportActivity": {
+        const format = msg.format as "clipboard" | "file";
+        const entries = msg.entries as ActivityEntry[];
+        const lines: string[] = ["# Diffchestrator Activity Log", ""];
+        const grouped = new Map<string, ActivityEntry[]>();
+        for (const e of entries) {
+          const day = new Date(e.date).toLocaleDateString(undefined, {
+            weekday: "short", month: "short", day: "numeric",
+          });
+          if (!grouped.has(day)) grouped.set(day, []);
+          grouped.get(day)!.push(e);
+        }
+        for (const [day, commits] of grouped) {
+          lines.push(`## ${day}`, "");
+          for (const c of commits) {
+            lines.push(`- \`${c.shortHash}\` **${c.repoName}** ${c.message} — _${c.author}_`);
+          }
+          lines.push("");
+        }
+        const md = lines.join("\n");
+        if (format === "clipboard") {
+          await vscode.env.clipboard.writeText(md);
+          vscode.window.showInformationMessage(`Diffchestrator: ${entries.length} commits copied as Markdown`);
+        } else {
+          const uri = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file("activity-log.md"),
+            filters: { Markdown: ["md"] },
+          });
+          if (uri) {
+            await vscode.workspace.fs.writeFile(uri, Buffer.from(md, "utf-8"));
+            vscode.window.showInformationMessage(`Diffchestrator: Saved to ${uri.fsPath}`);
+          }
+        }
+        break;
+      }
+
+      case "getSettings": {
+        const cfg = vscode.workspace.getConfiguration("diffchestrator");
+        this._panel.webview.postMessage({
+          type: "settingsData",
+          settings: {
+            scanRoots: cfg.get<string[]>("scanRoots", []),
+            scanMaxDepth: cfg.get<number>("scanMaxDepth", 6),
+            scanExtraSkipDirs: cfg.get<string[]>("scanExtraSkipDirs", []),
+            scanOnStartup: cfg.get<boolean>("scanOnStartup", true),
+            fetchOnScan: cfg.get<boolean>("fetchOnScan", false),
+            autoRefreshInterval: cfg.get<number>("autoRefreshInterval", 10),
+            changedOnlyDefault: cfg.get<boolean>("changedOnlyDefault", false),
+            showFavorites: cfg.get<boolean>("showFavorites", true),
+            showInlineBlame: cfg.get<boolean>("showInlineBlame", true),
+            claudePermissionMode: cfg.get<string>("claudePermissionMode", "acceptEdits"),
+            autoPushAfterCommit: cfg.get<boolean>("autoPushAfterCommit", false),
+            pinnedRepos: cfg.get<string[]>("pinnedRepos", []),
+          },
+        });
+        break;
+      }
+
+      case "updateSetting": {
+        const key = msg.key as string;
+        const value = msg.value;
+        const cfg = vscode.workspace.getConfiguration("diffchestrator");
+        await cfg.update(key, value, vscode.ConfigurationTarget.Global);
+        break;
+      }
+
+      case "addScanRootFromSettings": {
+        const folders = await vscode.window.showOpenDialog({
+          canSelectFolders: true,
+          canSelectFiles: false,
+          canSelectMany: false,
+          openLabel: "Select Scan Root",
+        });
+        if (folders && folders.length > 0) {
+          const cfg = vscode.workspace.getConfiguration("diffchestrator");
+          const roots = cfg.get<string[]>("scanRoots", []);
+          const newRoot = folders[0].fsPath;
+          if (!roots.includes(newRoot)) {
+            roots.push(newRoot);
+            await cfg.update("scanRoots", roots, vscode.ConfigurationTarget.Global);
+          }
+          // Send updated settings back
+          this._panel.webview.postMessage({
+            type: "settingsData",
+            settings: { ...cfg, scanRoots: roots },
+          });
+        }
+        break;
+      }
     }
   }
 

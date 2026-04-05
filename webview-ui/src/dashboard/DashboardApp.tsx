@@ -5,6 +5,7 @@ import BranchMap from "./BranchMap";
 import ChangeHeatmap from "./ChangeHeatmap";
 import SessionSummary from "./SessionSummary";
 import ActivityLog from "./ActivityLog";
+import SettingsPanel from "./SettingsPanel";
 import ShortcutRef from "./ShortcutRef";
 
 export interface ActivityEntry {
@@ -32,6 +33,8 @@ export interface SyncOverviewEntry {
   behind: number;
   totalChanges: number;
   stashCount: number;
+  isPinned: boolean;
+  healthScore: number;
 }
 
 export interface BranchMapEntry {
@@ -61,7 +64,7 @@ export interface SessionSummaryEntry {
   }[];
 }
 
-type Tab = "dashboard" | "activity" | "shortcuts";
+type Tab = "dashboard" | "activity" | "settings" | "shortcuts";
 
 export default function DashboardApp() {
   const [data, setData] = useState<DashboardPayload | null>(null);
@@ -101,7 +104,8 @@ export default function DashboardApp() {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "1") setTab("dashboard");
       else if (e.key === "2") setTab("activity");
-      else if (e.key === "3") setTab("shortcuts");
+      else if (e.key === "3") setTab("settings");
+      else if (e.key === "4") setTab("shortcuts");
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -138,9 +142,16 @@ export default function DashboardApp() {
             Activity
           </button>
           <button
+            className={`dashboard-tab ${tab === "settings" ? "dashboard-tab--active" : ""}`}
+            onClick={() => setTab("settings")}
+            title="3"
+          >
+            Settings
+          </button>
+          <button
             className={`dashboard-tab ${tab === "shortcuts" ? "dashboard-tab--active" : ""}`}
             onClick={() => setTab("shortcuts")}
-            title="3"
+            title="4"
           >
             Shortcuts
           </button>
@@ -212,6 +223,8 @@ export default function DashboardApp() {
       )}
 
       {tab === "activity" && <ActivityLog entries={data.activityLog} />}
+
+      {tab === "settings" && <SettingsPanel />}
 
       {tab === "shortcuts" && <ShortcutRef />}
     </div>

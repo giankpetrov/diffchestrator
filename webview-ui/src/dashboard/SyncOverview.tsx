@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import vscode from "../vscode";
 import type { SyncOverviewEntry } from "./DashboardApp";
 
-type SortKey = "name" | "branch" | "ahead" | "behind" | "totalChanges";
+type SortKey = "name" | "branch" | "ahead" | "behind" | "totalChanges" | "healthScore";
 type SortDir = "asc" | "desc";
 
 interface Props {
@@ -17,6 +17,11 @@ function statusDot(e: SyncOverviewEntry) {
   if (e.totalChanges > 0) return <span className="status-dot status-dot--dirty" title="Has changes" />;
   if (e.ahead > 0) return <span className="status-dot status-dot--ahead" title="Ahead of remote" />;
   return <span className="status-dot status-dot--clean" title="Clean" />;
+}
+
+function healthBadge(score: number) {
+  const cls = score >= 80 ? "health--good" : score >= 50 ? "health--warn" : "health--bad";
+  return <span className={`health-badge ${cls}`} title={`Health: ${score}/100`}>{score}</span>;
 }
 
 export default function SyncOverview({ entries, onOpenRepo, collapsed, onToggle }: Props) {
@@ -45,6 +50,8 @@ export default function SyncOverview({ entries, onOpenRepo, collapsed, onToggle 
   );
 
   const sorted = [...filtered].sort((a, b) => {
+    // Pinned repos always first
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
     const av = a[sortKey];
     const bv = b[sortKey];
     const cmp = typeof av === "string" ? av.localeCompare(bv as string) : (av as number) - (bv as number);
@@ -58,6 +65,7 @@ export default function SyncOverview({ entries, onOpenRepo, collapsed, onToggle 
 
   const rowClass = (e: SyncOverviewEntry, idx: number) => {
     const classes = [];
+    if (e.isPinned) classes.push("sync-row--pinned");
     if (e.behind > 0) classes.push("sync-row--behind");
     else if (e.totalChanges > 0) classes.push("sync-row--changes");
     else if (e.ahead > 0) classes.push("sync-row--ahead");
@@ -159,6 +167,7 @@ export default function SyncOverview({ entries, onOpenRepo, collapsed, onToggle 
                     <th onClick={() => toggleSort("behind")}>↓{indicator("behind")}</th>
                     <th onClick={() => toggleSort("totalChanges")}>Chg{indicator("totalChanges")}</th>
                     <th title="Stashes">S</th>
+                    <th onClick={() => toggleSort("healthScore")} title="Health score">H{indicator("healthScore")}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -167,6 +176,7 @@ export default function SyncOverview({ entries, onOpenRepo, collapsed, onToggle 
                     <tr key={e.path} className={rowClass(e, idx)}>
                       <td>
                         <span className="sync-repo-name">
+                          {e.isPinned && <span className="pin-icon" title="Pinned">📌</span>}
                           {statusDot(e)}
                           <span className="sync-repo-link" onClick={() => onOpenRepo(e.path)}>
                             {e.name}
@@ -179,6 +189,7 @@ export default function SyncOverview({ entries, onOpenRepo, collapsed, onToggle 
                       <td>{e.behind || ""}</td>
                       <td>{e.totalChanges || ""}</td>
                       <td>{e.stashCount || ""}</td>
+                      <td>{healthBadge(e.healthScore)}</td>
                       <td className="sync-actions">
                         {/* Contextual inline actions */}
                         {e.behind > 0 && (
@@ -201,6 +212,9 @@ export default function SyncOverview({ entries, onOpenRepo, collapsed, onToggle 
                           </button>
                           {openMenu === e.path && (
                             <div className="overflow-menu" onClick={(ev) => ev.stopPropagation()}>
+                              <button onClick={() => sendAction(e.isPinned ? "unpinRepo" : "pinRepo", e.path)}>
+                                {e.isPinned ? "⊘ Unpin" : "📌 Pin to top"}
+                              </button>
                               {e.totalChanges > 0 && (
                                 <button onClick={() => sendAction("discardAll", e.path)}>✕ Discard all</button>
                               )}

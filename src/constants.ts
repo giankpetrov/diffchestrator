@@ -90,6 +90,7 @@ export const CONFIG = {
   autoPushAfterCommit: "diffchestrator.autoPushAfterCommit",
   repoTags: "diffchestrator.repoTags",
   snapshots: "diffchestrator.snapshots",
+  pinnedRepos: "diffchestrator.pinnedRepos",
 } as const;
 
 export const CTX = {

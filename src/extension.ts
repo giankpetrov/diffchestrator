@@ -1271,6 +1271,21 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
     }
   }
 
+  // Onboarding: show walkthrough on first run if no scan roots configured
+  const wasOnboarded = context.globalState.get<boolean>("diffchestrator.onboarded", false);
+  if (!wasOnboarded) {
+    const onboardConfig = vscode.workspace.getConfiguration("diffchestrator");
+    const roots = onboardConfig.get<string[]>("scanRoots", []);
+    if (roots.length === 0) {
+      vscode.commands.executeCommand(
+        "workbench.action.openWalkthrough",
+        "andrevops-com.diffchestrator#diffchestrator.welcome",
+        false
+      );
+    }
+    context.globalState.update("diffchestrator.onboarded", true);
+  }
+
   // Public API for sibling extensions
   return {
     getCurrentRoot: () => repoManager.currentRoot,
