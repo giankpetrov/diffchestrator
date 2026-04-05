@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import vscode from "../vscode";
 import SyncOverview from "./SyncOverview";
 import BranchMap from "./BranchMap";
@@ -67,6 +67,7 @@ export default function DashboardApp() {
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -91,6 +92,21 @@ export default function DashboardApp() {
     vscode.postMessage({ type: "openRepo", repoPath });
   };
 
+  const toggleSection = useCallback((key: string) => {
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "1") setTab("dashboard");
+      else if (e.key === "2") setTab("activity");
+      else if (e.key === "3") setTab("shortcuts");
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   if (loading && !data) {
     return (
       <div className="dashboard-container">
@@ -110,18 +126,21 @@ export default function DashboardApp() {
           <button
             className={`dashboard-tab ${tab === "dashboard" ? "dashboard-tab--active" : ""}`}
             onClick={() => setTab("dashboard")}
+            title="1"
           >
             Dashboard
           </button>
           <button
             className={`dashboard-tab ${tab === "activity" ? "dashboard-tab--active" : ""}`}
             onClick={() => setTab("activity")}
+            title="2"
           >
             Activity
           </button>
           <button
             className={`dashboard-tab ${tab === "shortcuts" ? "dashboard-tab--active" : ""}`}
             onClick={() => setTab("shortcuts")}
+            title="3"
           >
             Shortcuts
           </button>
@@ -129,26 +148,34 @@ export default function DashboardApp() {
         <span className="header-actions">
           {tab === "dashboard" && (
             <>
-              <button className="refresh-btn" onClick={() => vscode.postMessage({ type: "switchRoot" })} title="Switch scan root">
-                Root
+              <button className="header-icon-btn" onClick={() => vscode.postMessage({ type: "switchRoot" })} title="Switch scan root">
+                ⌂
               </button>
-              <button className="refresh-btn" onClick={() => vscode.postMessage({ type: "filterByTag" })} title="Filter by tag">
-                Tags
+              <button className="header-icon-btn" onClick={() => vscode.postMessage({ type: "filterByTag" })} title="Filter by tag">
+                #
               </button>
-              <button className="refresh-btn" onClick={() => vscode.postMessage({ type: "claudeReviewAll" })} title="Claude review all changed repos">
-                Review
+              <span className="header-divider" />
+              <button className="header-icon-btn" onClick={() => vscode.postMessage({ type: "claudeReviewAll" })} title="Claude review all changed repos">
+                ◇
               </button>
-              <button className="refresh-btn" onClick={() => vscode.postMessage({ type: "saveSnapshot" })} title="Save workspace snapshot">
-                Save
+              <span className="header-divider" />
+              <button className="header-icon-btn" onClick={() => vscode.postMessage({ type: "saveSnapshot" })} title="Save workspace snapshot">
+                ⬇
               </button>
-              <button className="refresh-btn" onClick={() => vscode.postMessage({ type: "loadSnapshot" })} title="Load workspace snapshot">
-                Load
+              <button className="header-icon-btn" onClick={() => vscode.postMessage({ type: "loadSnapshot" })} title="Load workspace snapshot">
+                ⬆
               </button>
-              <button className="refresh-btn" onClick={() => vscode.postMessage({ type: "scan" })}>
-                Scan
+              <span className="header-divider" />
+              <button className="header-icon-btn" onClick={() => vscode.postMessage({ type: "scan" })} title="Rescan repos">
+                ⟳
               </button>
-              <button className="refresh-btn" onClick={handleRefresh} disabled={loading}>
-                {loading ? <><span className="spinner" /> Refreshing...</> : "Refresh"}
+              <button
+                className="header-icon-btn"
+                onClick={handleRefresh}
+                disabled={loading}
+                title="Refresh data"
+              >
+                {loading ? <span className="spinner" /> : "↻"}
               </button>
             </>
           )}
@@ -157,12 +184,29 @@ export default function DashboardApp() {
 
       {tab === "dashboard" && (
         <div className="dashboard-grid">
-          <SyncOverview entries={data.syncOverview} onOpenRepo={handleOpenRepo} />
-          <BranchMap entries={data.branchMap} onOpenRepo={handleOpenRepo} />
-          <ChangeHeatmap entries={data.changeHeatmap} onOpenRepo={handleOpenRepo} />
+          <SyncOverview
+            entries={data.syncOverview}
+            onOpenRepo={handleOpenRepo}
+            collapsed={!!collapsed.sync}
+            onToggle={() => toggleSection("sync")}
+          />
+          <BranchMap
+            entries={data.branchMap}
+            onOpenRepo={handleOpenRepo}
+            collapsed={!!collapsed.branch}
+            onToggle={() => toggleSection("branch")}
+          />
+          <ChangeHeatmap
+            entries={data.changeHeatmap}
+            onOpenRepo={handleOpenRepo}
+            collapsed={!!collapsed.heat}
+            onToggle={() => toggleSection("heat")}
+          />
           <SessionSummary
             entries={data.sessionSummary}
             sessionStartTime={data.sessionStartTime}
+            collapsed={!!collapsed.session}
+            onToggle={() => toggleSection("session")}
           />
         </div>
       )}
