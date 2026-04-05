@@ -5,12 +5,11 @@ VS Code extension for multi-repo Git orchestration. Publisher: `andrevops-com` (
 ## Build Commands
 
 ```bash
-make build           # Full build (webview + dashboard + extension)
-make compile         # Extension only (fast, for dev)
-make package         # Build + package .vsix
-make install         # Install latest Marketplace .vsix locally
-make publish         # Publish to both registries
-make clean           # Remove build artifacts
+make build              # Full build (webview + dashboard + extension)
+make compile            # Extension only (fast, for dev)
+make package            # Build + package .vsix
+make install            # Install latest Marketplace .vsix locally
+make clean              # Remove build artifacts
 ```
 
 Dashboard webview only:
@@ -21,11 +20,22 @@ cd webview-ui && npm run build:dashboard
 ## Release Workflow
 
 ```bash
-node scripts/release.mjs       # Auto-detect bump from conventional commits
+make release            # Auto-detect bump from conventional commits, build, package
+make release-patch      # Force patch bump
+make release-minor      # Force minor bump
+make release-major      # Force major bump
 git push && git push --tags    # Triggers CI (GitHub Actions)
 ```
 
 The release script: bumps version, updates CHANGELOG.md, commits, tags, builds two `.vsix` files (Marketplace + Open VSX). CI creates GitHub Release and auto-publishes to Open VSX.
+
+## Publishing
+
+```bash
+make publish            # Publish to both VS Code Marketplace and Open VSX
+make publish-marketplace  # Marketplace only
+make publish-openvsx      # Open VSX only
+```
 
 ## Project Structure
 
