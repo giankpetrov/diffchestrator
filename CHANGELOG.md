@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.54.0
+
+### Features
+- Dashboard UX overhaul — search, overflow menus, status dots, collapsible sections, keyboard nav, activity filters, skeleton loading, header toolbar
+
 ## 0.53.1
 
 ### Other
