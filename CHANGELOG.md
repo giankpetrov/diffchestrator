@@ -2,6 +2,15 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.56.0
+
+### Features
+- Stash overview, diff stat preview, and diffStatSummary/fileCount git methods
+
+### Other
+- Add make release and publish targets to CLAUDE.md
+- Add CLAUDE.md with project instructions for Claude Code sessions
+
 ## 0.55.1
 
 ### Performance
