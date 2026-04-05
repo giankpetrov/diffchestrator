@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.49.0
+
+### Features
+- Add dashboard webview with sync overview, branch map, heatmap, and session summary
+
 ## 0.48.7
 
 ### Bug Fixes
