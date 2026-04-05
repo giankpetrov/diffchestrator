@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.54.1
+
+### Other
+- Add Team Orchestration with Claude Code section
+
 ## 0.54.0
 
 ### Features
