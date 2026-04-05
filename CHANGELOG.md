@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.54.2
+
+### Performance
+- Deep optimization — metadata caching, combined git calls, memory leak fix, batch size increase, debounce guards
+
 ## 0.54.1
 
 ### Other
