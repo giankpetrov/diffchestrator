@@ -116,6 +116,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
   // Tree views
   const activeRepos = new ActiveReposProvider(repoManager);
   const repoTree = new RepoTreeProvider(repoManager);
+  context.subscriptions.push(repoTree);
   const changedFiles = new ChangedFilesProvider(repoManager);
 
   // Git content provider for diff URIs

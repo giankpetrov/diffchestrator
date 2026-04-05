@@ -220,9 +220,8 @@ export class DashboardWebviewPanel {
       await Promise.all(
         batch.map(async (r) => {
           try {
-            const [lastDate, sessionCommits, recentCommits] = await Promise.all([
-              this._git.lastCommitDate(r.path),
-              this._git.logSince(r.path, sinceISO, 50),
+            const [{ lastDate, commits: sessionCommits }, recentCommits] = await Promise.all([
+              this._git.logSinceWithDate(r.path, sinceISO, 50),
               this._git.log(r.path, 3),
             ]);
             heatmapEntries.push({
@@ -283,6 +282,7 @@ export class DashboardWebviewPanel {
         break;
 
       case "refresh":
+        if (this._updateThrottleTimer) break; // prevent double-refresh
         await this._repoManager.refreshAll();
         await this._update();
         break;
