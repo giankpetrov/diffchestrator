@@ -2,6 +2,17 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.49.1
+
+### Bug Fixes
+- Heatmap uses class-based heat levels instead of inline opacity for readability
+- Dashboard openRepo switches terminal to selected repo
+- Dashboard openRepo only selects repo instead of opening diff, prevents tab closure
+
+### Other
+- Remove tracked tsbuildinfo file
+- Gitignore tsbuildinfo files
+
 ## 0.49.0
 
 ### Features
