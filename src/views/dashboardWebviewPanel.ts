@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { RepoManager } from "../services/repoManager";
-import { CMD } from "../constants";
 
 interface SyncOverviewEntry {
   name: string;
@@ -262,7 +261,6 @@ export class DashboardWebviewPanel {
       case "openRepo": {
         const repoPath = msg.repoPath as string;
         this._repoManager.selectRepo(repoPath);
-        await vscode.commands.executeCommand(CMD.viewDiff, { path: repoPath });
         break;
       }
 
