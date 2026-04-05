@@ -177,12 +177,36 @@
   padding: 8px;
   border-radius: 4px;
   border: 1px solid var(--vscode-panel-border, #333);
+  border-left: 3px solid var(--vscode-panel-border, #333);
   cursor: pointer;
   transition: border-color 0.15s;
 }
 
 .heatmap-tile:hover {
   border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.heatmap-tile--hot {
+  border-left-color: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
+  background: rgba(199, 78, 57, 0.1);
+}
+
+.heatmap-tile--warm {
+  border-left-color: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
+  background: rgba(226, 192, 141, 0.08);
+}
+
+.heatmap-tile--mild {
+  border-left-color: var(--vscode-descriptionForeground, #888);
+}
+
+.heatmap-tile--stale {
+  border-left-color: var(--vscode-descriptionForeground, #888);
+  opacity: 0.6;
+}
+
+.heatmap-tile--quiet {
+  opacity: 0.5;
 }
 
 .heatmap-tile-name {
