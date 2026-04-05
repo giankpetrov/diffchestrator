@@ -46,14 +46,6 @@ export default function SyncOverview({ entries, onOpenRepo }: Props) {
   const aheadCount = entries.filter((e) => e.ahead > 0).length;
   const dirtyCount = entries.filter((e) => e.totalChanges > 0).length;
 
-  const handlePullAll = () => {
-    vscode.postMessage({ type: "pullAll" });
-  };
-
-  const handlePullRepo = (repoPath: string) => {
-    vscode.postMessage({ type: "pullRepo", repoPath });
-  };
-
   return (
     <div className="dashboard-section">
       <div className="dashboard-section-header">
@@ -66,11 +58,23 @@ export default function SyncOverview({ entries, onOpenRepo }: Props) {
             {behindCount === 0 && aheadCount === 0 && dirtyCount === 0 && "All clean"}
           </span>
         </span>
-        {behindCount > 0 && (
-          <button className="refresh-btn" onClick={handlePullAll}>
-            Pull {behindCount} outdated
+        <span className="header-actions">
+          <button
+            className="refresh-btn"
+            onClick={() => vscode.postMessage({ type: "fetchAll" })}
+            title="Fetch all repos"
+          >
+            Fetch All
           </button>
-        )}
+          {behindCount > 0 && (
+            <button
+              className="refresh-btn"
+              onClick={() => vscode.postMessage({ type: "pullAll" })}
+            >
+              Pull {behindCount} outdated
+            </button>
+          )}
+        </span>
       </div>
       <div className="dashboard-section-body">
         {entries.length === 0 ? (
@@ -94,7 +98,7 @@ export default function SyncOverview({ entries, onOpenRepo }: Props) {
                 <th onClick={() => toggleSort("totalChanges")}>
                   Changes{indicator("totalChanges")}
                 </th>
-                <th></th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -112,16 +116,48 @@ export default function SyncOverview({ entries, onOpenRepo }: Props) {
                   <td>{e.ahead || ""}</td>
                   <td>{e.behind || ""}</td>
                   <td>{e.totalChanges || ""}</td>
-                  <td>
+                  <td className="sync-actions">
                     {e.behind > 0 && (
                       <button
                         className="icon-btn"
-                        onClick={() => handlePullRepo(e.path)}
-                        title={`Pull ${e.behind} commit${e.behind > 1 ? "s" : ""}`}
+                        onClick={() => vscode.postMessage({ type: "pullRepo", repoPath: e.path })}
+                        title="Pull"
                       >
-                        ↓ Pull
+                        ↓
                       </button>
                     )}
+                    {e.ahead > 0 && (
+                      <button
+                        className="icon-btn"
+                        onClick={() => vscode.postMessage({ type: "pushRepo", repoPath: e.path })}
+                        title="Push"
+                      >
+                        ↑
+                      </button>
+                    )}
+                    {e.totalChanges > 0 && (
+                      <button
+                        className="icon-btn"
+                        onClick={() => vscode.postMessage({ type: "aiCommit", repoPath: e.path })}
+                        title="AI Commit"
+                      >
+                        ✦
+                      </button>
+                    )}
+                    <button
+                      className="icon-btn"
+                      onClick={() => vscode.postMessage({ type: "openTerminal", repoPath: e.path })}
+                      title="Terminal"
+                    >
+                      &gt;_
+                    </button>
+                    <button
+                      className="icon-btn"
+                      onClick={() => vscode.postMessage({ type: "openClaude", repoPath: e.path })}
+                      title="Claude Code"
+                    >
+                      ◇
+                    </button>
                   </td>
                 </tr>
               ))}

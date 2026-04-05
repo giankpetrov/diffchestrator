@@ -4,6 +4,7 @@ import SyncOverview from "./SyncOverview";
 import BranchMap from "./BranchMap";
 import ChangeHeatmap from "./ChangeHeatmap";
 import SessionSummary from "./SessionSummary";
+import ShortcutRef from "./ShortcutRef";
 
 export interface DashboardPayload {
   syncOverview: SyncOverviewEntry[];
@@ -105,6 +106,7 @@ export default function DashboardApp() {
           entries={data.sessionSummary}
           sessionStartTime={data.sessionStartTime}
         />
+        <ShortcutRef />
       </div>
     </div>
   );

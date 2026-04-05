@@ -112,6 +112,17 @@
   text-decoration: underline;
 }
 
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sync-actions {
+  display: flex;
+  gap: 2px;
+  white-space: nowrap;
+}
+
 .sort-indicator {
   margin-left: 4px;
   font-size: 10px;
@@ -265,6 +276,45 @@
 .commit-time {
   color: var(--vscode-descriptionForeground);
   flex-shrink: 0;
+}
+
+/* Shortcut Reference */
+.shortcut-ref {
+  grid-column: 1 / -1;
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 2px 24px;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.shortcut-key {
+  font-family: var(--vscode-editor-fontFamily, monospace);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-panel-border, #444);
+  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+  color: var(--vscode-editor-foreground);
+  white-space: nowrap;
+  min-width: 140px;
+}
+
+.shortcut-desc {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.shortcut-divider {
+  height: 6px;
 }
 
 /* Empty state */

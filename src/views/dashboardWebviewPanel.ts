@@ -286,6 +286,26 @@ export class DashboardWebviewPanel {
         break;
       }
 
+      case "pushRepo": {
+        const repoPath = msg.repoPath as string;
+        try {
+          await this._git.push(repoPath);
+          await this._repoManager.refreshRepo(repoPath);
+          await this._update();
+          vscode.window.showInformationMessage(`Diffchestrator: Pushed ${require("path").basename(repoPath)}`);
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(`Diffchestrator: Push failed for ${require("path").basename(repoPath)}: ${errMsg}`);
+        }
+        break;
+      }
+
+      case "fetchAll": {
+        await vscode.commands.executeCommand(CMD.fetchAll);
+        await this._update();
+        break;
+      }
+
       case "openTerminal": {
         const repoPath = msg.repoPath as string;
         if (repoPath) {
@@ -295,6 +315,24 @@ export class DashboardWebviewPanel {
             cwd: repoPath,
           });
           terminal.show();
+        }
+        break;
+      }
+
+      case "openClaude": {
+        const repoPath = msg.repoPath as string;
+        if (repoPath) {
+          this._repoManager.selectRepo(repoPath);
+          await vscode.commands.executeCommand(CMD.openClaudeCode, { path: repoPath });
+        }
+        break;
+      }
+
+      case "aiCommit": {
+        const repoPath = msg.repoPath as string;
+        if (repoPath) {
+          this._repoManager.selectRepo(repoPath);
+          await vscode.commands.executeCommand(CMD.aiCommit, { path: repoPath });
         }
         break;
       }
