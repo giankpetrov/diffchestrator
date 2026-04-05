@@ -134,13 +134,19 @@ They're complementary — you can use Diffchestrator inside a multi-root workspa
 - **Status bar debounce** — consolidates multiple rapid updates into one render
 
 ### Dashboard (`Alt+D, V`)
-A webview panel with four sections providing a bird's-eye view across all repos:
-- **Sync Overview** — table of all repos with ahead/behind/changes, color-coded rows, sortable columns. "Pull N outdated" bulk button + per-repo pull buttons for repos that are behind
-- **Branch Map** — repos grouped by main vs feature branches, with pills per branch name
+A full command center with three tabs. Also available from the Repositories title bar. Auto-refreshes every 2 seconds when repos change.
+
+**Dashboard tab** — four sections:
+- **Sync Overview** — table with ahead/behind/changes/stashes, color-coded rows, sortable columns. Per-repo actions: pull, push, AI commit, discard, switch branch, commit history, open in browser, copy info, terminal, Claude Code. Bulk actions: Fetch All, Pull N outdated, Push N ahead
+- **Branch Map** — repos grouped by main vs feature branches, with pills per branch name. Branch Cleanup button to find and delete merged branches
 - **Change Heatmap** — tile grid with heat levels (hot/warm/mild/stale/quiet) based on changes + days since last commit
 - **Session Summary** — commits since VS Code session start, grouped by repo (works with external CLIs too)
 
-Auto-refreshes every 2 seconds when repos change. Also available from the Repositories title bar.
+Header actions: Switch Root, Filter by Tag, Claude Review All, Save/Load Snapshot, Scan, Refresh
+
+**Activity tab** — cross-repo commit timeline sorted by date, grouped by day. Shows hash, repo name, message, author, and relative time across all repos.
+
+**Shortcuts tab** — full keyboard shortcut reference with all `Alt+D` chords.
 
 ### Status Bar
 - **Left**: repo count + total changes (click to open sidebar)
