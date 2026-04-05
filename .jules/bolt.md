@@ -1,0 +1,3 @@
+## 2025-02-14 - Pre-calculate array lookup properties before sorting
+**Learning:** Found an O(N^2) operation hiding within an array `.sort()` function where `Array.find()` was being executed for every comparison loop to look up a property from the original collection. This degrades performance as sorting operates in O(N log N) but performs many comparisons per item.
+**Action:** When sorting mapped objects, always pre-calculate and include external references inside the mapped object so sorting stays O(N log N).
