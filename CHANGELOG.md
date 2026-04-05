@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.51.1
+
+### Bug Fixes
+- Use 'where' instead of 'which' for CLI detection on Windows
+
 ## 0.51.0
 
 ### Features
