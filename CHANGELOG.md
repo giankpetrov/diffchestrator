@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.55.1
+
+### Performance
+- Optimize repository sorting in switchRepo command
+
 ## 0.55.0
 
 ### Features
