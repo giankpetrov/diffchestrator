@@ -1,7 +1,20 @@
 import * as vscode from "vscode";
 import { RepoManager } from "../services/repoManager";
+import type { CommitEntry } from "../types";
 import { CMD } from "../constants";
 import { showTerminalIfExists } from "../commands/terminal";
+
+interface DiffStatSummary {
+  files: string[];
+  additions: number;
+  deletions: number;
+}
+
+interface StashOverviewEntry {
+  repoName: string;
+  repoPath: string;
+  stashes: { index: number; message: string }[];
+}
 
 interface SyncOverviewEntry {
   name: string;
@@ -13,6 +26,7 @@ interface SyncOverviewEntry {
   stashCount: number;
   isPinned: boolean;
   healthScore: number;
+  diffStat?: DiffStatSummary;
 }
 
 function computeHealthScore(r: { totalChanges: number; ahead: number; behind: number; stashCount: number }): number {
@@ -57,6 +71,7 @@ interface DashboardPayload {
   changeHeatmap: HeatmapEntry[];
   sessionSummary: SessionSummaryEntry[];
   activityLog: ActivityEntry[];
+  stashOverview: StashOverviewEntry[];
   sessionStartTime: string;
 }
 
@@ -219,6 +234,7 @@ export class DashboardWebviewPanel {
         changeHeatmap: [],
         sessionSummary: [],
         activityLog: [],
+        stashOverview: [],
         sessionStartTime: sinceISO,
       } satisfies DashboardPayload,
     });
@@ -228,16 +244,39 @@ export class DashboardWebviewPanel {
     const heatmapEntries: HeatmapEntry[] = [];
     const sessionEntries: SessionSummaryEntry[] = [];
     const activityEntries: ActivityEntry[] = [];
+    const stashEntries: StashOverviewEntry[] = [];
+    const diffStats = new Map<string, DiffStatSummary>();
 
     for (let i = 0; i < repos.length; i += BATCH) {
       const batch = repos.slice(i, i + BATCH);
       await Promise.all(
         batch.map(async (r) => {
           try {
-            const [{ lastDate, commits: sessionCommits }, recentCommits] = await Promise.all([
+            const calls: Promise<unknown>[] = [
               this._git.logSinceWithDate(r.path, sinceISO, 50),
               this._git.log(r.path, 3),
-            ]);
+            ];
+            // Only fetch diff stats for dirty repos
+            if (r.totalChanges > 0) {
+              calls.push(this._git.diffStatSummary(r.path));
+            }
+            // Only fetch stash list for repos with stashes
+            if (r.stashCount > 0) {
+              calls.push(this._git.stashList(r.path));
+            }
+            const results = await Promise.all(calls);
+            const { lastDate, commits: sessionCommits } = results[0] as { lastDate: string | undefined; commits: CommitEntry[] };
+            const recentCommits = results[1] as CommitEntry[];
+            let resultIdx = 2;
+            if (r.totalChanges > 0) {
+              diffStats.set(r.path, results[resultIdx++] as DiffStatSummary);
+            }
+            if (r.stashCount > 0) {
+              const stashes = results[resultIdx] as { index: number; message: string }[];
+              if (stashes.length > 0) {
+                stashEntries.push({ repoName: r.name, repoPath: r.path, stashes });
+              }
+            }
             heatmapEntries.push({
               name: r.name,
               path: r.path,
@@ -275,15 +314,22 @@ export class DashboardWebviewPanel {
     // Sort activity by date descending
     activityEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    // Enrich sync entries with diff stats
+    const enrichedSync = syncOverview.map((e) => ({
+      ...e,
+      diffStat: diffStats.get(e.path),
+    }));
+
     // Send complete data
     this._panel.webview.postMessage({
       type: "dashboardUpdate",
       data: {
-        syncOverview,
+        syncOverview: enrichedSync,
         branchMap,
         changeHeatmap: heatmapEntries,
         sessionSummary: sessionEntries,
         activityLog: activityEntries,
+        stashOverview: stashEntries,
         sessionStartTime: sinceISO,
       } satisfies DashboardPayload,
     });
@@ -458,6 +504,33 @@ export class DashboardWebviewPanel {
         await vscode.commands.executeCommand(CMD.filterByTag);
         await this._update();
         break;
+
+      case "stashPop": {
+        const repoPath = msg.repoPath as string;
+        try {
+          await this._git.stashPop(repoPath);
+          await this._repoManager.refreshRepo(repoPath);
+          await this._update();
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(`Diffchestrator: Stash pop failed: ${errMsg}`);
+        }
+        break;
+      }
+
+      case "stashApply": {
+        const repoPath = msg.repoPath as string;
+        const index = msg.index as number;
+        try {
+          await this._git.stashApply(repoPath, index);
+          await this._repoManager.refreshRepo(repoPath);
+          await this._update();
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(`Diffchestrator: Stash apply failed: ${errMsg}`);
+        }
+        break;
+      }
 
       case "pinRepo": {
         const repoPath = msg.repoPath as string;

@@ -455,6 +455,29 @@ export class GitExecutor {
     return result.stdout || result.stderr;
   }
 
+  async diffStatSummary(repoPath: string): Promise<{ files: string[]; additions: number; deletions: number }> {
+    const result = await this._run(["diff", "--numstat", "HEAD"], repoPath);
+    if (result.code !== 0 || !result.stdout.trim()) return { files: [], additions: 0, deletions: 0 };
+    let additions = 0;
+    let deletions = 0;
+    const files: string[] = [];
+    for (const line of result.stdout.trim().split("\n")) {
+      const parts = line.split("\t");
+      if (parts.length >= 3) {
+        additions += parts[0] === "-" ? 0 : parseInt(parts[0], 10) || 0;
+        deletions += parts[1] === "-" ? 0 : parseInt(parts[1], 10) || 0;
+        files.push(parts[2]);
+      }
+    }
+    return { files, additions, deletions };
+  }
+
+  async fileCount(repoPath: string): Promise<number> {
+    const result = await this._run(["ls-files"], repoPath);
+    if (!result.stdout.trim()) return 0;
+    return result.stdout.trim().split("\n").length;
+  }
+
   async diffStatFile(repoPath: string, file: string, staged: boolean): Promise<{ additions: number; deletions: number }> {
     const args = staged
       ? ["diff", "--cached", "--numstat", "--", file]
