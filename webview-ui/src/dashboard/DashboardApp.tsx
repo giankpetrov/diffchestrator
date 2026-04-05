@@ -50,9 +50,12 @@ export interface SessionSummaryEntry {
   }[];
 }
 
+type Tab = "dashboard" | "shortcuts";
+
 export default function DashboardApp() {
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>("dashboard");
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -92,22 +95,40 @@ export default function DashboardApp() {
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <h2>Diffchestrator Dashboard</h2>
-        <button className="refresh-btn" onClick={handleRefresh} disabled={loading}>
-          {loading ? <><span className="spinner" /> Refreshing...</> : "Refresh"}
-        </button>
+        <div className="dashboard-tabs">
+          <button
+            className={`dashboard-tab ${tab === "dashboard" ? "dashboard-tab--active" : ""}`}
+            onClick={() => setTab("dashboard")}
+          >
+            Dashboard
+          </button>
+          <button
+            className={`dashboard-tab ${tab === "shortcuts" ? "dashboard-tab--active" : ""}`}
+            onClick={() => setTab("shortcuts")}
+          >
+            Shortcuts
+          </button>
+        </div>
+        {tab === "dashboard" && (
+          <button className="refresh-btn" onClick={handleRefresh} disabled={loading}>
+            {loading ? <><span className="spinner" /> Refreshing...</> : "Refresh"}
+          </button>
+        )}
       </header>
 
-      <div className="dashboard-grid">
-        <SyncOverview entries={data.syncOverview} onOpenRepo={handleOpenRepo} />
-        <BranchMap entries={data.branchMap} onOpenRepo={handleOpenRepo} />
-        <ChangeHeatmap entries={data.changeHeatmap} onOpenRepo={handleOpenRepo} />
-        <SessionSummary
-          entries={data.sessionSummary}
-          sessionStartTime={data.sessionStartTime}
-        />
-        <ShortcutRef />
-      </div>
+      {tab === "dashboard" && (
+        <div className="dashboard-grid">
+          <SyncOverview entries={data.syncOverview} onOpenRepo={handleOpenRepo} />
+          <BranchMap entries={data.branchMap} onOpenRepo={handleOpenRepo} />
+          <ChangeHeatmap entries={data.changeHeatmap} onOpenRepo={handleOpenRepo} />
+          <SessionSummary
+            entries={data.sessionSummary}
+            sessionStartTime={data.sessionStartTime}
+          />
+        </div>
+      )}
+
+      {tab === "shortcuts" && <ShortcutRef />}
     </div>
   );
 }

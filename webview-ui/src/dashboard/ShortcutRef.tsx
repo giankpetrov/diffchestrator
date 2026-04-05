@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 const shortcuts = [
   ["Alt+D, S", "Scan repos"],
   ["Alt+D, R", "Switch repo"],
@@ -21,6 +19,7 @@ const shortcuts = [
   ["Alt+D, F", "Browse files"],
   ["Alt+D, /", "Search in repo"],
   ["Alt+D, .", "Search active repos"],
+  ["Alt+D, Shift+/", "Search all repos"],
   ["Alt+D, W", "Open in new window"],
   ["Alt+D, O", "Reveal in file explorer"],
   ["", ""],
@@ -44,34 +43,23 @@ const shortcuts = [
 ];
 
 export default function ShortcutRef() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className="dashboard-section shortcut-ref">
-      <div
-        className="dashboard-section-header"
-        onClick={() => setOpen((o) => !o)}
-        style={{ cursor: "pointer" }}
-      >
-        <span>
-          {open ? "▾" : "▸"} Keyboard Shortcuts
-        </span>
-        <span className="section-badge">Alt+D chord</span>
+    <div className="shortcut-panel">
+      <div className="shortcut-panel-header">
+        All shortcuts use <kbd className="shortcut-key">Alt+D</kbd> as a chord prefix — press Alt+D, release, then press the key.
       </div>
-      {open && (
-        <div className="dashboard-section-body shortcut-grid">
-          {shortcuts.map(([key, desc], i) =>
-            key === "" ? (
-              <div key={i} className="shortcut-divider" />
-            ) : (
-              <div key={key} className="shortcut-row">
-                <kbd className="shortcut-key">{key}</kbd>
-                <span className="shortcut-desc">{desc}</span>
-              </div>
-            )
-          )}
-        </div>
-      )}
+      <div className="shortcut-grid">
+        {shortcuts.map(([key, desc], i) =>
+          key === "" ? (
+            <div key={i} className="shortcut-divider" />
+          ) : (
+            <div key={key} className="shortcut-row">
+              <kbd className="shortcut-key">{key}</kbd>
+              <span className="shortcut-desc">{desc}</span>
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 }

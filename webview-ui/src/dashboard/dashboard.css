@@ -11,10 +11,30 @@
   margin-bottom: 12px;
 }
 
-.dashboard-header h2 {
-  margin: 0;
-  font-size: 14px;
+/* Tabs */
+.dashboard-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.dashboard-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--vscode-descriptionForeground);
+  padding: 4px 12px;
+  font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-tab:hover {
+  color: var(--vscode-editor-foreground);
+}
+
+.dashboard-tab--active {
+  color: var(--vscode-editor-foreground);
+  border-bottom-color: var(--vscode-focusBorder, #007fd4);
 }
 
 .dashboard-grid {
@@ -279,8 +299,14 @@
 }
 
 /* Shortcut Reference */
-.shortcut-ref {
-  grid-column: 1 / -1;
+.shortcut-panel {
+  padding: 4px 0;
+}
+
+.shortcut-panel-header {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 12px;
 }
 
 .shortcut-grid {
