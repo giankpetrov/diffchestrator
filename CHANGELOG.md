@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.56.2
+
+### Other
+- Fix enum compatibility, add stash validation, flag injection, and cache tests (42 pass)
+
 ## 0.56.1
 
 ### Bug Fixes
