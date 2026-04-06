@@ -108,14 +108,31 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
     })
   );
 
-  // When user clicks a terminal tab, switch to that repo (full viewDiff flow)
+  // When user clicks a terminal tab, switch to that repo (full viewDiff flow).
+  // If the terminal belongs to a repo in a different root, switch roots first.
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTerminal((terminal) => {
+    vscode.window.onDidChangeActiveTerminal(async (terminal) => {
       if (!terminal || switchingRepo) return;
       const allPaths = repoManager.repos.map((r) => r.path);
       const repoPath = findRepoForTerminal(terminal, allPaths);
       if (repoPath && repoPath !== repoManager.selectedRepo) {
         vscode.commands.executeCommand(CMD.viewDiff, { path: repoPath });
+        return;
+      }
+      if (!repoPath) {
+        // No match in current root — try other previously scanned roots
+        const otherPaths = repoManager.otherRootRepoPaths;
+        const crossMatch = findRepoForTerminal(
+          terminal,
+          otherPaths.map((o) => o.path)
+        );
+        if (crossMatch) {
+          const entry = otherPaths.find((o) => o.path === crossMatch);
+          if (entry) {
+            await vscode.commands.executeCommand(CMD.switchRoot, entry.root);
+            vscode.commands.executeCommand(CMD.viewDiff, { path: crossMatch });
+          }
+        }
       }
     })
   );

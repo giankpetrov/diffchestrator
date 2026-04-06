@@ -16,6 +16,7 @@ export class RepoManager implements vscode.Disposable {
   private _selectedRepoPaths = new Set<string>();
   private _recentRepoPaths: string[] = [];
   private _selectionPerRoot = new Map<string, { selected?: string; multi: string[]; recent: string[] }>();
+  private _pathsByRoot = new Map<string, string[]>();
   private _swapTarget: { path: string; root?: string } | undefined;
   private _swappingBack = false;
   private _state: vscode.Memento | undefined;
@@ -142,6 +143,21 @@ export class RepoManager implements vscode.Disposable {
   get currentRoot(): string | undefined {
     return this._currentRoot;
   }
+
+  /**
+   * Return all repo paths from other (non-current) roots that were previously scanned.
+   * Used by the terminal handler to detect cross-root terminal switches.
+   */
+  get otherRootRepoPaths(): Array<{ root: string; path: string }> {
+    const result: Array<{ root: string; path: string }> = [];
+    for (const [root, paths] of this._pathsByRoot) {
+      if (root === this._currentRoot) continue;
+      for (const p of paths) {
+        result.push({ root, path: p });
+      }
+    }
+    return result;
+  }
   get changedOnly(): boolean {
     return this._changedOnly;
   }
@@ -239,6 +255,9 @@ export class RepoManager implements vscode.Disposable {
         }
       }
     );
+
+    // Cache all repo paths for this root so cross-root terminal matching works
+    this._pathsByRoot.set(rootPath, repos.map((r) => r.path));
 
     this.startAutoRefresh();
   }
