@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.56.10
+
+### Bug Fixes
+- Use directory-name inclusion for cross-root terminal matching, await viewDiff
+
 ## 0.56.9
 
 ### Bug Fixes
