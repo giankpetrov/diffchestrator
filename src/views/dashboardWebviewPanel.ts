@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { RepoManager } from "../services/repoManager";
-import type { CommitEntry } from "../types";
+import type { CommitEntry, DashboardMessage } from "../types";
 import { CMD } from "../constants";
 import { showTerminalIfExists } from "../commands/terminal";
 
@@ -347,9 +347,10 @@ export class DashboardWebviewPanel {
     return !!this._repoManager.getRepo(repoPath);
   }
 
-  private async _handleMessage(msg: Record<string, unknown>): Promise<void> {
+  private async _handleMessage(msg: DashboardMessage): Promise<void> {
     // Validate repoPath against known repos for any message that includes one
-    if (msg.repoPath && typeof msg.repoPath === "string" && !this._isKnownRepo(msg.repoPath as string)) {
+    const repoPath = "repoPath" in msg ? msg.repoPath : undefined;
+    if (repoPath && !this._isKnownRepo(repoPath)) {
       // Allow pin/unpin (path may be in config but not currently scanned)
       if (msg.type !== "pinRepo" && msg.type !== "unpinRepo") {
         return;
@@ -382,7 +383,7 @@ export class DashboardWebviewPanel {
         break;
 
       case "openRepo": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         this._repoManager.selectRepo(repoPath);
         await showTerminalIfExists(repoPath);
         break;
@@ -395,7 +396,7 @@ export class DashboardWebviewPanel {
       }
 
       case "pullRepo": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         try {
           await this._git.pull(repoPath);
           await this._repoManager.refreshRepo(repoPath);
@@ -408,7 +409,7 @@ export class DashboardWebviewPanel {
       }
 
       case "pushRepo": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         try {
           await this._git.push(repoPath);
           await this._repoManager.refreshRepo(repoPath);
@@ -428,7 +429,7 @@ export class DashboardWebviewPanel {
       }
 
       case "openTerminal": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           const name = path.basename(repoPath);
           const terminal = vscode.window.createTerminal({
@@ -441,7 +442,7 @@ export class DashboardWebviewPanel {
       }
 
       case "openClaude": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           this._repoManager.selectRepo(repoPath);
           await vscode.commands.executeCommand(CMD.openClaudeCode, { path: repoPath });
@@ -450,7 +451,7 @@ export class DashboardWebviewPanel {
       }
 
       case "aiCommit": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           this._repoManager.selectRepo(repoPath);
           await vscode.commands.executeCommand(CMD.aiCommit, { path: repoPath });
@@ -464,7 +465,7 @@ export class DashboardWebviewPanel {
         break;
 
       case "switchBranch": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           this._repoManager.selectRepo(repoPath);
           await vscode.commands.executeCommand(CMD.switchBranch, { path: repoPath });
@@ -474,7 +475,7 @@ export class DashboardWebviewPanel {
       }
 
       case "discardAll": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           await vscode.commands.executeCommand(CMD.discardAll, { path: repoPath });
           await this._update();
@@ -483,7 +484,7 @@ export class DashboardWebviewPanel {
       }
 
       case "commitHistory": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           this._repoManager.selectRepo(repoPath);
           await vscode.commands.executeCommand(CMD.commitHistory, { path: repoPath });
@@ -492,7 +493,7 @@ export class DashboardWebviewPanel {
       }
 
       case "openRemoteUrl": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           await vscode.commands.executeCommand(CMD.openRemoteUrl, { path: repoPath });
         }
@@ -500,7 +501,7 @@ export class DashboardWebviewPanel {
       }
 
       case "copyRepoInfo": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         if (repoPath) {
           await vscode.commands.executeCommand(CMD.copyRepoInfo, { path: repoPath });
         }
@@ -526,7 +527,7 @@ export class DashboardWebviewPanel {
         break;
 
       case "stashPop": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         try {
           await this._git.stashPop(repoPath);
           await this._repoManager.refreshRepo(repoPath);
@@ -539,8 +540,8 @@ export class DashboardWebviewPanel {
       }
 
       case "stashApply": {
-        const repoPath = msg.repoPath as string;
-        const index = msg.index as number;
+        const repoPath = msg.repoPath;
+        const index = msg.index;
         try {
           await this._git.stashApply(repoPath, index);
           await this._repoManager.refreshRepo(repoPath);
@@ -553,7 +554,7 @@ export class DashboardWebviewPanel {
       }
 
       case "pinRepo": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         const cfg = vscode.workspace.getConfiguration("diffchestrator");
         const pinned = cfg.get<string[]>("pinnedRepos", []);
         if (!pinned.includes(repoPath)) {
@@ -565,7 +566,7 @@ export class DashboardWebviewPanel {
       }
 
       case "unpinRepo": {
-        const repoPath = msg.repoPath as string;
+        const repoPath = msg.repoPath;
         const cfg = vscode.workspace.getConfiguration("diffchestrator");
         const pinned = cfg.get<string[]>("pinnedRepos", []).filter((p) => p !== repoPath);
         await cfg.update("pinnedRepos", pinned, vscode.ConfigurationTarget.Global);
@@ -574,8 +575,8 @@ export class DashboardWebviewPanel {
       }
 
       case "exportActivity": {
-        const format = msg.format as "clipboard" | "file";
-        const entries = msg.entries as ActivityEntry[];
+        const format = msg.format;
+        const entries = msg.entries;
         const lines: string[] = ["# Diffchestrator Activity Log", ""];
         const grouped = new Map<string, ActivityEntry[]>();
         for (const e of entries) {
@@ -632,7 +633,7 @@ export class DashboardWebviewPanel {
       }
 
       case "updateSetting": {
-        const key = msg.key as string;
+        const key = msg.key;
         const value = msg.value;
         const cfg = vscode.workspace.getConfiguration("diffchestrator");
         await cfg.update(key, value, vscode.ConfigurationTarget.Global);

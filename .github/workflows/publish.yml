@@ -27,6 +27,9 @@ jobs:
       - name: Install webview dependencies
         run: npm ci --prefix webview-ui
 
+      - name: Run tests
+        run: npm test
+
       - name: Build extension
         run: npm run build
 

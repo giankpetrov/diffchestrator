@@ -28,6 +28,7 @@ import { InlineBlameService } from "./services/inlineBlame";
 import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 // GitExecutor accessed via repoManager.git (shared instance)
 import { showTerminalIfExists, findRepoForTerminal } from "./commands/terminal";
+import { extractTabUri } from "./types";
 import * as path from "path";
 
 /** Public API for sibling extensions (e.g. Epic Lens) */
@@ -155,7 +156,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
     // Repo is clean — close any open git-show tabs for it
     const tabsToClose: vscode.Tab[] = [];
     for (const tab of vscode.window.tabGroups.all.flatMap((g) => g.tabs)) {
-      const uri = (tab.input as any)?.uri ?? (tab.input as any)?.original ?? (tab.input as any)?.modified;
+      const uri = extractTabUri(tab.input);
       if (uri?.scheme === "git-show") {
         try {
           const params = JSON.parse(uri.query);
@@ -1154,15 +1155,13 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
     for (const group of vscode.window.tabGroups.all) {
       for (const tab of group.tabs) {
         let belongsToRepo = false;
-        const input = tab.input as any;
+        const input = tab.input as Record<string, unknown> | undefined;
         if (input?.uri) {
-          // TabInputText or TabInputNotebook — has a single uri
-          belongsToRepo = uriBelongsToRepo(input.uri, repoPath);
+          belongsToRepo = uriBelongsToRepo(input.uri as vscode.Uri, repoPath);
         } else if (input?.original && input?.modified) {
-          // TabInputDiff — has original + modified URIs
           belongsToRepo =
-            uriBelongsToRepo(input.original, repoPath) ||
-            uriBelongsToRepo(input.modified, repoPath);
+            uriBelongsToRepo(input.original as vscode.Uri, repoPath) ||
+            uriBelongsToRepo(input.modified as vscode.Uri, repoPath);
         }
         if (belongsToRepo) {
           tabsToClose.push(tab);
