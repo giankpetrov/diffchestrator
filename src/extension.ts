@@ -29,6 +29,7 @@ import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 import { showTerminalIfExists, findRepoForTerminal } from "./commands/terminal";
 import { extractTabUri } from "./types";
 import * as path from "path";
+import * as fs from "fs";
 
 /** Public API for sibling extensions (e.g. Epic Lens) */
 export interface DiffchestratorApi {
@@ -120,18 +121,22 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
         return;
       }
       if (!repoPath) {
-        // No match in current root — try other previously scanned roots
-        const otherPaths = repoManager.otherRootRepoPaths;
-        const crossMatch = findRepoForTerminal(
-          terminal,
-          otherPaths.map((o) => o.path)
-        );
-        if (crossMatch) {
-          const entry = otherPaths.find((o) => o.path === crossMatch);
-          if (entry) {
-            await vscode.commands.executeCommand(CMD.switchRoot, entry.root);
-            vscode.commands.executeCommand(CMD.viewDiff, { path: crossMatch });
-          }
+        // No match in current root — extract project name from terminal
+        // (e.g. "Claude: my-app" → "my-app") and probe other scan roots
+        const m = terminal.name.match(/^(?:Claude|YOLO|DC):\s*(.+)$/i);
+        const projectName = m?.[1]?.trim();
+        if (!projectName) return;
+        const roots = vscode.workspace.getConfiguration("diffchestrator").get<string[]>("scanRoots", []);
+        for (const root of roots) {
+          if (root === repoManager.currentRoot) continue;
+          const candidate = path.join(root, projectName);
+          try {
+            if (fs.existsSync(path.join(candidate, ".git"))) {
+              await vscode.commands.executeCommand(CMD.switchRoot, root);
+              vscode.commands.executeCommand(CMD.viewDiff, { path: candidate });
+              return;
+            }
+          } catch { /* skip inaccessible roots */ }
         }
       }
     })
