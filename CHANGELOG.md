@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.56.9
+
+### Bug Fixes
+- Probe scanRoots for cross-root terminal matching instead of requiring prior scan
+
 ## 0.56.8
 
 ### Bug Fixes
