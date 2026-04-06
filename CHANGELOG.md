@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.56.4
+
+### Other
+- Type-safe webview messages, eliminate as-any casts, remove dead types, add CI tests, tab URI helper
+
 ## 0.56.3
 
 ### Bug Fixes
