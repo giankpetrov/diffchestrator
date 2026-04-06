@@ -1,21 +1,25 @@
-import * as vscode from "vscode";
+import type * as vscode from "vscode";
 
-export enum ChangeType {
-  Modified = "modified",
-  Added = "added",
-  Deleted = "deleted",
-  Renamed = "renamed",
-  Copied = "copied",
-  TypeChanged = "typeChanged",
-  Unmerged = "unmerged",
-  Unknown = "unknown",
-}
+export const ChangeType = {
+  Modified: "modified",
+  Added: "added",
+  Deleted: "deleted",
+  Renamed: "renamed",
+  Copied: "copied",
+  TypeChanged: "typeChanged",
+  Unmerged: "unmerged",
+  Unknown: "unknown",
+} as const;
 
-export enum FileStatus {
-  Staged = "staged",
-  Unstaged = "unstaged",
-  Untracked = "untracked",
-}
+export type ChangeType = typeof ChangeType[keyof typeof ChangeType];
+
+export const FileStatus = {
+  Staged: "staged",
+  Unstaged: "unstaged",
+  Untracked: "untracked",
+} as const;
+
+export type FileStatus = typeof FileStatus[keyof typeof FileStatus];
 
 export interface FileChange {
   path: string;

@@ -77,7 +77,7 @@ export class GitExecutor {
   async isGitRepo(dirPath: string): Promise<boolean> {
     const gitDir = path.join(dirPath, ".git");
     try {
-      const stat = fs.statSync(gitDir);
+      const stat = await fs.promises.stat(gitDir);
       return stat.isDirectory();
     } catch {
       return false;
