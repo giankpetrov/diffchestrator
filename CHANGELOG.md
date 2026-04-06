@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.56.1
+
+### Bug Fixes
+- Security hardening — repoPath validation, stash index validation, cache TTL cleanup, update concurrency guard
+
 ## 0.56.0
 
 ### Features
