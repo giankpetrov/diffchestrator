@@ -1,13 +1,12 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { exec, execFile } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import type { RepoManager } from "../services/repoManager";
 import { CMD } from "../constants";
 import { escapeForTerminal } from "../utils/shell";
 
 const execFileAsync = promisify(execFile);
-const execAsync = promisify(exec);
 
 export type TerminalKind = "shell" | "claude" | "yolo" | "yolonew";
 
@@ -30,7 +29,8 @@ async function commandExists(cmd: string): Promise<boolean> {
  */
 async function aliasOrCommandExists(name: string): Promise<boolean> {
   try {
-    await execAsync(`type ${name}`, { shell: "/bin/bash", env: { ...process.env, BASH_ENV: `${process.env.HOME}/.bashrc` } });
+    // Must use interactive shell (-ic) so bash loads aliases from .bashrc
+    await execFileAsync("/bin/bash", ["-ic", `type ${name}`], { timeout: 5000 });
     return true;
   } catch {
     return false;
