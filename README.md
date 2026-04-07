@@ -30,7 +30,7 @@ Diffchestrator shines when multiple Claude Code agents work across repos simulta
 
 When you spawn multiple Claude Code sessions (one per repo or per story), Diffchestrator gives you a single pane of glass:
 
-- **Per-repo terminal tracking** — each repo tracks its own Claude, Yolo, and shell terminals independently. The Active Repos view shows which terminals are running where
+- **Per-repo terminal tracking** — each repo tracks its own Claude, Yolo, Yolonew, and shell terminals independently. The Active Repos view shows which terminals are running where
 - **Auto-switch terminal** — clicking a repo in the sidebar or dashboard auto-surfaces that repo's Claude terminal
 - **Smart notifications** — get notified when Claude commits or modifies files. Notifications queue while VS Code is unfocused and show a grouped summary on refocus, with "Push" and "Show Terminal" quick actions
 
@@ -72,10 +72,11 @@ Diffchestrator doesn't require Claude to run inside VS Code. The file watcher mo
 - **AI Commit** — runs `claude --permission-mode acceptEdits` in the repo's terminal for real-time output (`Alt+D, C`)
 - **Open Claude Code** — launches `claude -c` to continue the previous session, or `claude --add-dir` for multiple selected repos (`Alt+D, L`)
 - **Yolo** — opens terminal and runs the `yolo` alias from claude-sandbox (`Alt+D, Y`)
+- **Yolonew** — opens terminal and runs the `yolonew` alias from claude-sandbox (`Alt+D, Alt+Y`)
 - **Claude Multi-Repo Review** — opens Claude with `--add-dir` for all repos with changes and a review prompt
 - **Ask Claude** button per diff hunk in the multi-repo diff webview
-- **Per-repo terminal tracking** — each repo tracks its own Claude, Yolo, and shell terminals independently. Switching repos auto-switches the terminal panel to the correct session
-- **Terminal reuse** — `Alt+D, L` and `Alt+D, Y` reuse existing sessions instead of spawning new ones
+- **Per-repo terminal tracking** — each repo tracks its own Claude, Yolo, Yolonew, and shell terminals independently. Switching repos auto-switches the terminal panel to the correct session
+- **Terminal reuse** — `Alt+D, L`, `Alt+D, Y`, and `Alt+D, Alt+Y` reuse existing sessions instead of spawning new ones
 - **CLI validation** — checks that `claude` and `docker` are installed before launching terminals
 
 ### Active Repos & Workspace Switching
@@ -84,8 +85,8 @@ Diffchestrator doesn't require Claude to run inside VS Code. The file watcher mo
 - **Persisted across reloads** — active repos, selection, and current scan root survive VS Code restarts
 - **Cycle repos** — `Alt+D, Tab` cycles through all opened repos including favorites, switching the changed files view, terminal, and diff editor in one keystroke
 - **Close active repos** — `Alt+D, Q` closes current, `Alt+D, Shift+Q` picks which to close, `Alt+D, Shift+Tab` closes all
-- **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Shell)
-- **Auto-switch terminal** — clicking a repo in Active Repos or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Shell)
+- **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Yolonew, Shell)
+- **Auto-switch terminal** — clicking a repo in Active Repos or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Yolonew > Shell)
 - **Terminal tab sync** — clicking a terminal tab (Claude, Yolo, shell) auto-selects the repo in the sidebar, opens its changed files, and adds it to Active Repos if not already there
 - **Auto-add on terminal open** — opening a terminal, Claude Code, or Yolo session for a repo automatically adds it to Active Repos
 - **Smart notifications** — notifies when Claude commits or modifies files. Queues notifications when VS Code is unfocused and shows a grouped summary on refocus. Commit notifications offer "Push" and "Show Terminal" actions
@@ -237,6 +238,7 @@ All shortcuts use **Alt+D** as a chord prefix — press `Alt+D`, release, then p
 | `Alt+D, C` | AI Commit (Claude) |
 | `Alt+D, L` | Open Claude Code (continues session) |
 | `Alt+D, Y` | Yolo (Claude Sandbox) |
+| `Alt+D, Alt+Y` | Yolonew (Claude Sandbox) |
 | `Alt+D, S` | Scan for repositories |
 | `Alt+D, Shift+S` | Switch scan root |
 | `Alt+D, Shift+T` | Open terminal at scan root |
@@ -274,13 +276,13 @@ Right-click a **repository** in the tree:
 - View Diff / Commit / Push / Pull / Fetch / AI Commit / Undo Commit
 - Commit History / Switch Branch / Stash Management
 - Browse Files / Open Repo in New Window
-- Open Terminal / Open Claude Code / Yolo
+- Open Terminal / Open Claude Code / Yolo / Yolonew
 - Copy Repo Info / Open Remote in Browser / Set Tags / Reveal in File Explorer
 - Toggle Favorite / Select (for multi-repo operations)
 
 Right-click a **directory** in the tree:
 
-- Open Terminal / Open Claude Code / Yolo (launches with cwd set to the directory)
+- Open Terminal / Open Claude Code / Yolo / Yolonew (launches with cwd set to the directory)
 - Reveal in File Explorer
 - Toggle Favorite
 
