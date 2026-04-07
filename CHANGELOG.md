@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.59.1
+
+### Bug Fixes
+- Use interactive shell for yolo alias detection
+
 ## 0.59.0
 
 ### Features
