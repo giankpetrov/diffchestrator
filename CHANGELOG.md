@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.60.0
+
+### Features
+- Add ED25519 release signing and build provenance attestation
+
 ## 0.59.1
 
 ### Bug Fixes
