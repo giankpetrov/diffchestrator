@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -47,6 +49,27 @@ jobs:
           "
           npx @vscode/vsce package --no-dependencies -o "diffchestrator-${VERSION}-openvsx.vsix"
           git checkout package.json
+
+      - name: Generate checksums
+        run: |
+          sha256sum *.vsix > checksums.txt
+          cat checksums.txt
+
+      - name: Sign checksums
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          echo "$SIGNING_KEY" | base64 -d > /tmp/signing.pem
+          openssl pkey -in /tmp/signing.pem -noout
+          openssl pkeyutl -sign -inkey /tmp/signing.pem -rawin -in checksums.txt \
+            | xxd -p -c 256 | tr -d '\n' > checksums.txt.sig
+          rm /tmp/signing.pem
+          echo "signature: $(cat checksums.txt.sig)"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "*.vsix"
 
       - name: Generate changelog
         id: changelog
@@ -92,12 +115,26 @@ jobs:
 
             echo "---"
             echo "**Full Changelog**: [\`${PREV_TAG:-initial}..${CURRENT_TAG}\`](https://github.com/${{ github.repository }}/compare/${PREV_TAG:-initial}...${CURRENT_TAG})"
+            echo ""
+            echo "## Verify"
+            echo ""
+            echo '```sh'
+            echo "# Verify build provenance"
+            echo "gh attestation verify diffchestrator-*.vsix --repo ${{ github.repository }}"
+            echo ""
+            echo "# Verify checksum signature (requires public_key.pem from repo)"
+            echo "curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/public_key.pem -o public_key.pem"
+            echo "xxd -r -p checksums.txt.sig | openssl pkeyutl -verify -pubin -inkey public_key.pem -rawin -in checksums.txt -sigfile /dev/stdin"
+            echo '```'
           } > RELEASE_NOTES.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: "*.vsix"
+          files: |
+            *.vsix
+            checksums.txt
+            checksums.txt.sig
           body_path: RELEASE_NOTES.md
 
       # Uncomment when VSCE_PAT secret is configured
