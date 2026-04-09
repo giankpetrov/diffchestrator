@@ -1285,11 +1285,12 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
             await showTerminalIfExists(repoPath);
           }
 
-          // Auto-open configured terminal types if not already running
+          // Auto-open configured terminal types — only if not already running
           const autoTerminals = vscode.workspace
             .getConfiguration("diffchestrator")
             .get<string[]>("autoTerminals", []);
           for (const kind of autoTerminals) {
+            if (getRepoTerminal(repoPath, kind as TerminalKind)) continue;
             if (kind === "shell") {
               await vscode.commands.executeCommand(CMD.openTerminal, { path: repoPath });
             } else if (kind === "yolo") {
