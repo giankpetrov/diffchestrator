@@ -88,7 +88,7 @@ Diffchestrator doesn't require Claude to run inside VS Code. The file watcher mo
 - **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Yolonew, Shell)
 - **Auto-switch terminal** — clicking a repo in Active Repos or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Yolonew > Shell)
 - **Cycle terminal** — `Alt+D, J` rotates through all alive terminals for the current repo (Claude → Yolo → Yolonew → Shell)
-- **Navigate terminals** — `Alt+D, ↑/↓` moves between all open terminals across repos, auto-selecting the target repo
+- **Navigate terminals** — `Alt+D, ↑/↓` moves between terminal tabs across repos, auto-selecting the target repo. For split panes within the same tab, use `Alt+D, J` to cycle between them (VS Code doesn't expose terminal group structure to extensions, so combined navigation is best-effort)
 - **Terminal tab sync** — clicking a terminal tab (Claude, Yolo, shell) auto-selects the repo in the sidebar, opens its changed files, and adds it to Active Repos if not already there
 - **Auto-add on terminal open** — opening a terminal, Claude Code, or Yolo session for a repo automatically adds it to Active Repos
 - **Smart notifications** — notifies when Claude commits or modifies files. Queues notifications when VS Code is unfocused and shows a grouped summary on refocus. Commit notifications offer "Push" and "Show Terminal" actions

@@ -408,6 +408,14 @@ async function moveToNextGroup(direction: 1 | -1): Promise<void> {
 /**
  * Navigate to the next/previous terminal, traversing split panes within
  * groups before moving to the next group.
+ *
+ * Known limitation: navigation through split terminal groups is unreliable
+ * because VS Code doesn't expose terminal group/tab structure via the API.
+ * focusNextPane wraps silently, focusNext skips panes, and
+ * vscode.window.terminals is in creation order (not visual).
+ * Workaround: use Alt+D ↑/↓ for tabs + Alt+D J for panes within a group.
+ * See: https://github.com/Andrevops/diffchestrator/issues/TBD
+ *
  * direction: 1 = next (down), -1 = previous (up)
  */
 export async function navigateTerminal(direction: 1 | -1, allRepoPaths: string[]): Promise<string | undefined> {
