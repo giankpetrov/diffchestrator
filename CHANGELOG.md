@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.63.9
+
+### Bug Fixes
+- Cache group edge terminals to eliminate flicker on wrap-around
+
 ## 0.63.8
 
 ### Bug Fixes
