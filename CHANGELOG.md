@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.68.2
+
+### Bug Fixes
+- Check untracked terminals before auto-opening new ones
+
 ## 0.68.1
 
 ### Bug Fixes
