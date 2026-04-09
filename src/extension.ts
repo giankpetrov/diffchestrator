@@ -26,7 +26,7 @@ import { FileWatcher } from "./services/fileWatcher";
 import { InlineBlameService } from "./services/inlineBlame";
 import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 // GitExecutor accessed via repoManager.git (shared instance)
-import { showTerminalIfExists, findRepoForTerminal, cycleTerminal, closeRepoTerminal, navigateTerminal, terminalIcon } from "./commands/terminal";
+import { showTerminalIfExists, findRepoForTerminal, cycleTerminal, closeRepoTerminal, navigateTerminal, terminalIcon, adoptExistingTerminals } from "./commands/terminal";
 import { extractTabUri } from "./types";
 import { resolveRepoPath } from "./utils/fileItem";
 import * as path from "path";
@@ -1325,6 +1325,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
     if (startupRoot) {
       repoManager.scan(startupRoot).then(() => {
         fileWatcher.watchAll();
+        adoptExistingTerminals(repoManager.allRepos.map((r) => r.path));
       }).catch((err) => {
         outputChannel.appendLine(`[startup scan] ${err instanceof Error ? err.message : err}`);
       });

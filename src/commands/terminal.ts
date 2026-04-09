@@ -107,6 +107,59 @@ function key(repoPath: string, kind: TerminalKind): string {
   return `${repoPath}::${kind}`;
 }
 
+/** Infer terminal kind from its icon (creationOptions.iconPath) */
+function inferKindFromIcon(terminal: vscode.Terminal): TerminalKind | undefined {
+  const opts = terminal.creationOptions as { iconPath?: vscode.ThemeIcon };
+  const icon = opts?.iconPath;
+  if (icon instanceof vscode.ThemeIcon) {
+    if (icon.id === "sparkle") return "claude";
+    if (icon.id === "flame") return "yolo";
+    if (icon.id === "zap") return "yolonew";
+    if (icon.id === "terminal") return "shell";
+  }
+  return undefined;
+}
+
+/**
+ * Scan all existing terminals and adopt ones matching known repo basenames.
+ * Called on activation to restore tracking after window reload.
+ */
+export function adoptExistingTerminals(allRepoPaths: string[]): void {
+  const sorted = [...allRepoPaths].sort(
+    (a, b) => path.basename(b).length - path.basename(a).length
+  );
+
+  for (const terminal of vscode.window.terminals) {
+    // Skip if already tracked
+    let tracked = false;
+    for (const [, t] of repoTerminals) {
+      if (t === terminal) { tracked = true; break; }
+    }
+    if (tracked) continue;
+
+    const name = terminal.name;
+
+    // Match repo by basename in terminal name
+    for (const rp of sorted) {
+      const repoName = path.basename(rp);
+      if (name === repoName || name.includes(repoName)) {
+        // Infer kind from icon, fall back to name-based inference, then "shell"
+        const kind = inferKindFromIcon(terminal)
+          ?? (/claude/i.test(name) ? "claude" :
+              /yolonew/i.test(name) ? "yolonew" :
+              /yolo/i.test(name) ? "yolo" :
+              /^DC:/i.test(name) ? "shell" : "shell");
+
+        // Only adopt if this repo+kind slot is empty
+        if (!repoTerminals.has(key(rp, kind))) {
+          repoTerminals.set(key(rp, kind), terminal);
+        }
+        break;
+      }
+    }
+  }
+}
+
 // Clean up map when terminals close
 vscode.window.onDidCloseTerminal((t) => {
   for (const [k, term] of repoTerminals) {
