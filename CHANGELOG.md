@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.66.2
+
+### Bug Fixes
+- Adopt icon-only terminals on demand in getAlive fallback
+
 ## 0.66.1
 
 ### Bug Fixes
