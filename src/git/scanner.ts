@@ -111,6 +111,7 @@ export class Scanner extends EventEmitter {
       repo.ahead = counts.ahead;
       repo.behind = counts.behind;
       repo.headOid = counts.headOid;
+      repo.mergeState = counts.mergeState;
       repo.stashCount = stashes;
     } catch {
       /* ignore — skeleton data stays */

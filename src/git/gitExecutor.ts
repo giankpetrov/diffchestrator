@@ -231,7 +231,18 @@ export class GitExecutor {
       }
     }
 
-    const statusResult = { branch, upstream, ahead, behind, staged, unstaged, untracked };
+    // Detect merge/rebase/cherry-pick state from .git sentinel files
+    let mergeState: import("../types.ts").MergeState;
+    const gitDir = path.join(repoPath, ".git");
+    if (fs.existsSync(path.join(gitDir, "MERGE_HEAD"))) {
+      mergeState = "merging";
+    } else if (fs.existsSync(path.join(gitDir, "rebase-merge")) || fs.existsSync(path.join(gitDir, "rebase-apply"))) {
+      mergeState = "rebasing";
+    } else if (fs.existsSync(path.join(gitDir, "CHERRY_PICK_HEAD"))) {
+      mergeState = "cherry-picking";
+    }
+
+    const statusResult = { branch, upstream, ahead, behind, staged, unstaged, untracked, mergeState };
     // Only cache if no invalidation happened while the git process was running
     if ((this._statusEpoch.get(repoPath) ?? 0) === epoch) {
       this._statusCache.set(repoPath, { result: statusResult, time: Date.now() });
@@ -241,7 +252,7 @@ export class GitExecutor {
 
   async shortStatus(
     repoPath: string
-  ): Promise<{ staged: number; unstaged: number; untracked: number; branch: string; ahead: number; behind: number; headOid: string }> {
+  ): Promise<{ staged: number; unstaged: number; untracked: number; branch: string; ahead: number; behind: number; headOid: string; mergeState?: import("../types.ts").MergeState }> {
     const result = await this._run(
       ["status", "--porcelain=v2", "--branch", "-uall"],
       repoPath
@@ -280,7 +291,18 @@ export class GitExecutor {
       }
     }
 
-    return { staged, unstaged, untracked, branch, ahead, behind, headOid };
+    // Detect merge/rebase/cherry-pick state
+    let mergeState: import("../types.ts").MergeState;
+    const gitDir = path.join(repoPath, ".git");
+    if (fs.existsSync(path.join(gitDir, "MERGE_HEAD"))) {
+      mergeState = "merging";
+    } else if (fs.existsSync(path.join(gitDir, "rebase-merge")) || fs.existsSync(path.join(gitDir, "rebase-apply"))) {
+      mergeState = "rebasing";
+    } else if (fs.existsSync(path.join(gitDir, "CHERRY_PICK_HEAD"))) {
+      mergeState = "cherry-picking";
+    }
+
+    return { staged, unstaged, untracked, branch, ahead, behind, headOid, mergeState };
   }
 
   async diff(

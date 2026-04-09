@@ -26,6 +26,8 @@ export interface FileChange {
   status: FileStatus;
 }
 
+export type MergeState = "merging" | "rebasing" | "cherry-picking" | undefined;
+
 export interface RepoStatus {
   branch: string;
   upstream?: string;
@@ -34,6 +36,7 @@ export interface RepoStatus {
   staged: FileChange[];
   unstaged: FileChange[];
   untracked: FileChange[];
+  mergeState?: MergeState;
 }
 
 export interface RepoSummary {
@@ -49,6 +52,7 @@ export interface RepoSummary {
   behind: number;
   headOid: string;
   stashCount: number;
+  mergeState?: MergeState;
 }
 
 export interface CommitEntry {

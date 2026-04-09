@@ -88,6 +88,7 @@ export class ActiveReposProvider implements vscode.TreeDataProvider<ActiveRepoNo
       if (r.behind > 0) sync.push(`↓${r.behind}`);
       if (sync.length > 0) parts.push(sync.join(" "));
       if (r.totalChanges > 0) parts.push(`${r.totalChanges} changes`);
+      if (r.mergeState) parts.push(`⚠ ${r.mergeState}`);
     } else {
       parts.push("(not scanned)");
     }
