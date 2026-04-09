@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.67.1
+
+### Bug Fixes
+- Prevent findRepoForTerminal from overwriting occupied tracking slots
+
 ## 0.67.0
 
 ### Features
