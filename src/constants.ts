@@ -76,6 +76,8 @@ export const CMD = {
   dashboard: "diffchestrator.dashboard",
   cycleTerminal: "diffchestrator.cycleTerminal",
   closeTerminal: "diffchestrator.closeTerminal",
+  nextTerminal: "diffchestrator.nextTerminal",
+  prevTerminal: "diffchestrator.prevTerminal",
 } as const;
 
 export const CONFIG = {

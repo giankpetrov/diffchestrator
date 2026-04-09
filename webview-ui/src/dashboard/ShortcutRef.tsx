@@ -34,6 +34,8 @@ const shortcuts = [
   ["Alt+D, Shift+T", "Terminal at root"],
   ["Alt+D, J", "Cycle terminal"],
   ["Alt+D, Alt+K", "Close terminal"],
+  ["Alt+D, ↓", "Next terminal (across repos)"],
+  ["Alt+D, ↑", "Previous terminal (across repos)"],
   ["Alt+D, Backspace", "Swap to previous repo"],
   ["", ""],
   ["Alt+D, Q", "Close active repo"],

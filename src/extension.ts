@@ -26,7 +26,7 @@ import { FileWatcher } from "./services/fileWatcher";
 import { InlineBlameService } from "./services/inlineBlame";
 import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 // GitExecutor accessed via repoManager.git (shared instance)
-import { showTerminalIfExists, findRepoForTerminal, cycleTerminal, closeRepoTerminal } from "./commands/terminal";
+import { showTerminalIfExists, findRepoForTerminal, cycleTerminal, closeRepoTerminal, navigateTerminal } from "./commands/terminal";
 import { extractTabUri } from "./types";
 import * as path from "path";
 
@@ -1288,6 +1288,20 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       await closeRepoTerminal(repoPath);
     })
   );
+
+  // Navigate terminals across repos — auto-select the target repo
+  const registerNav = (cmd: string, direction: 1 | -1) => {
+    context.subscriptions.push(
+      vscode.commands.registerCommand(cmd, () => {
+        const repoPath = navigateTerminal(direction);
+        if (repoPath && repoPath !== repoManager.selectedRepo) {
+          repoManager.selectRepo(repoPath);
+        }
+      })
+    );
+  };
+  registerNav(CMD.nextTerminal, 1);
+  registerNav(CMD.prevTerminal, -1);
 
   // Phase 5: File watcher already created above (before command registrations)
 

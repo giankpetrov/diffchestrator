@@ -506,6 +506,18 @@
         "title": "Close Terminal",
         "category": "Diffchestrator",
         "icon": "$(close)"
+      },
+      {
+        "command": "diffchestrator.nextTerminal",
+        "title": "Next Terminal",
+        "category": "Diffchestrator",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "diffchestrator.prevTerminal",
+        "title": "Previous Terminal",
+        "category": "Diffchestrator",
+        "icon": "$(arrow-up)"
       }
     ],
     "menus": {
@@ -941,6 +953,16 @@
         "command": "diffchestrator.closeTerminal",
         "key": "alt+d alt+k",
         "mac": "alt+d alt+k"
+      },
+      {
+        "command": "diffchestrator.nextTerminal",
+        "key": "alt+d down",
+        "mac": "alt+d down"
+      },
+      {
+        "command": "diffchestrator.prevTerminal",
+        "key": "alt+d up",
+        "mac": "alt+d up"
       }
     ],
     "configuration": {

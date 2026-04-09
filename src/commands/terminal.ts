@@ -352,6 +352,53 @@ export async function closeRepoTerminal(repoPath: string): Promise<void> {
   }
 }
 
+/**
+ * Get all tracked diffchestrator terminals in a stable order.
+ * Returns [terminal, repoPath][] sorted by repo path then kind.
+ */
+function getAllTrackedTerminals(): [vscode.Terminal, string][] {
+  const result: [vscode.Terminal, string, TerminalKind][] = [];
+  for (const [k, t] of repoTerminals) {
+    if (vscode.window.terminals.includes(t)) {
+      const [repoPath, kind] = k.split("::") as [string, TerminalKind];
+      result.push([t, repoPath, kind]);
+    }
+  }
+  // Sort by repo path, then by cycle order within repo
+  result.sort((a, b) =>
+    a[1] !== b[1]
+      ? a[1].localeCompare(b[1])
+      : CYCLE_ORDER.indexOf(a[2]) - CYCLE_ORDER.indexOf(b[2])
+  );
+  return result.map(([t, rp]) => [t, rp]);
+}
+
+/**
+ * Navigate to the next/previous terminal across all repos.
+ * direction: 1 = next (down), -1 = previous (up)
+ */
+export function navigateTerminal(direction: 1 | -1): string | undefined {
+  const all = getAllTrackedTerminals();
+  if (all.length === 0) {
+    vscode.window.showInformationMessage("Diffchestrator: No terminals open.");
+    return undefined;
+  }
+
+  const active = vscode.window.activeTerminal;
+  let idx = active ? all.findIndex(([t]) => t === active) : -1;
+
+  if (idx === -1) {
+    // No active terminal or not tracked — show first/last
+    idx = direction === 1 ? 0 : all.length - 1;
+  } else {
+    idx = (idx + direction + all.length) % all.length;
+  }
+
+  const [terminal, repoPath] = all[idx];
+  terminal.show(false);
+  return repoPath;
+}
+
 export function registerTerminalCommand(
   context: vscode.ExtensionContext,
   repoManager: RepoManager
