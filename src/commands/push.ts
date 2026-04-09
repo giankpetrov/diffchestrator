@@ -131,6 +131,9 @@ export function registerPushCommands(
       let success = 0;
       let failed = 0;
 
+      const paths = [...selectedPaths];
+      const BATCH_SIZE = 5;
+
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -138,27 +141,28 @@ export function registerPushCommands(
           cancellable: false,
         },
         async (progress) => {
-          const total = selectedPaths.size;
-          let current = 0;
-
-          for (const repoPath of selectedPaths) {
-            const name = path.basename(repoPath);
-            current++;
+          for (let i = 0; i < paths.length; i += BATCH_SIZE) {
+            const batch = paths.slice(i, i + BATCH_SIZE);
             progress.report({
-              message: `${current}/${total} - ${name}`,
-              increment: (1 / total) * 100,
+              message: `${Math.min(i + BATCH_SIZE, paths.length)}/${paths.length} repos`,
+              increment: (batch.length / paths.length) * 100,
             });
 
-            try {
-              const output = await git.push(repoPath);
-              channel.appendLine(`[OK] ${name}: ${output.trim()}`);
-              await repoManager.refreshRepo(repoPath);
-              success++;
-            } catch (err: unknown) {
-              const msg = err instanceof Error ? err.message : String(err);
-              channel.appendLine(`[FAIL] ${name}: ${msg}`);
-              failed++;
-            }
+            await Promise.all(
+              batch.map(async (repoPath) => {
+                const name = path.basename(repoPath);
+                try {
+                  const output = await git.push(repoPath);
+                  channel.appendLine(`[OK] ${name}: ${output.trim()}`);
+                  await repoManager.refreshRepo(repoPath);
+                  success++;
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : String(err);
+                  channel.appendLine(`[FAIL] ${name}: ${msg}`);
+                  failed++;
+                }
+              })
+            );
           }
         }
       );
