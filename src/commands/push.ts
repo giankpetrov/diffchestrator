@@ -54,6 +54,47 @@ export function registerPushCommands(
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand(
+      CMD.forcePush,
+      async (item?: any) => {
+        const repoPath = resolveRepoPath(item, repoManager.selectedRepo);
+        if (!repoPath) {
+          vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
+          return;
+        }
+
+        const repoName = path.basename(repoPath);
+        const confirm = await vscode.window.showWarningMessage(
+          `Force push ${repoName}? This uses --force-with-lease (safe against overwriting others' work).`,
+          { modal: true },
+          "Force Push"
+        );
+        if (confirm !== "Force Push") return;
+
+        try {
+          await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: `Diffchestrator: Force pushing ${repoName}...`,
+              cancellable: false,
+            },
+            async () => {
+              const output = await git.push(repoPath, true);
+              channel.appendLine(`[force-push] ${repoName}`);
+              channel.appendLine(output);
+            }
+          );
+          await repoManager.refreshRepo(repoPath);
+          vscode.window.showInformationMessage(`Diffchestrator: Force pushed ${repoName}`);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(`Diffchestrator: Force push failed for ${repoName}: ${msg}`);
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand(CMD.bulkPush, async () => {
       const selectedPaths = repoManager.selectedRepoPaths;
       if (selectedPaths.size === 0) {

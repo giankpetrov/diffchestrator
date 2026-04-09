@@ -502,6 +502,12 @@
         "icon": "$(terminal)"
       },
       {
+        "command": "diffchestrator.forcePush",
+        "title": "Force Push",
+        "category": "Diffchestrator",
+        "icon": "$(cloud-upload)"
+      },
+      {
         "command": "diffchestrator.closeTerminal",
         "title": "Close Terminal",
         "category": "Diffchestrator",
@@ -963,6 +969,11 @@
         "command": "diffchestrator.prevTerminal",
         "key": "alt+d up",
         "mac": "alt+d up"
+      },
+      {
+        "command": "diffchestrator.forcePush",
+        "key": "alt+d shift+p",
+        "mac": "alt+d shift+p"
       }
     ],
     "configuration": {

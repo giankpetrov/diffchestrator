@@ -75,6 +75,7 @@ export const CMD = {
   revealInExplorer: "diffchestrator.revealInExplorer",
   dashboard: "diffchestrator.dashboard",
   cycleTerminal: "diffchestrator.cycleTerminal",
+  forcePush: "diffchestrator.forcePush",
   closeTerminal: "diffchestrator.closeTerminal",
   nextTerminal: "diffchestrator.nextTerminal",
   prevTerminal: "diffchestrator.prevTerminal",
