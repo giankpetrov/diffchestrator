@@ -111,7 +111,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
 
   // When user clicks a terminal tab, switch to that repo (full viewDiff flow).
   // If the terminal belongs to a repo in a different root, switch roots first.
-  let terminalClickInProgress = false;
+  let suppressTerminalSwitch = false;
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTerminal(async (terminal) => {
       if (!terminal || switchingRepo) return;
@@ -123,11 +123,11 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       // the tracking map can return stale paths from a previous root.
       if (repoPath && currentRootPaths.has(repoPath)) {
         if (repoPath !== repoManager.selectedRepo) {
-          terminalClickInProgress = true;
+          suppressTerminalSwitch = true;
           try {
             await vscode.commands.executeCommand(CMD.viewDiff, { path: repoPath });
           } finally {
-            terminalClickInProgress = false;
+            suppressTerminalSwitch = false;
           }
         }
         return;
@@ -1223,7 +1223,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
           repoManager.selectRepo(repoPath);
           await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
           // Don't override user's terminal choice when triggered by clicking a terminal tab
-          if (!terminalClickInProgress) {
+          if (!suppressTerminalSwitch) {
             await showTerminalIfExists(repoPath);
           }
         } finally {
@@ -1285,7 +1285,8 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
         vscode.window.showWarningMessage("Diffchestrator: No repository selected.");
         return;
       }
-      await cycleTerminal(repoPath);
+      suppressTerminalSwitch = true;
+      try { await cycleTerminal(repoPath); } finally { suppressTerminalSwitch = false; }
     })
   );
 
@@ -1305,9 +1306,14 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
   const registerNav = (cmd: string, direction: 1 | -1) => {
     context.subscriptions.push(
       vscode.commands.registerCommand(cmd, async () => {
-        const repoPath = await navigateTerminal(direction, repoManager.allRepos.map((r) => r.path));
-        if (repoPath && repoPath !== repoManager.selectedRepo) {
-          repoManager.selectRepo(repoPath);
+        suppressTerminalSwitch = true;
+        try {
+          const repoPath = await navigateTerminal(direction, repoManager.allRepos.map((r) => r.path));
+          if (repoPath && repoPath !== repoManager.selectedRepo) {
+            repoManager.selectRepo(repoPath);
+          }
+        } finally {
+          suppressTerminalSwitch = false;
         }
       })
     );
