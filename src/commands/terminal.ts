@@ -353,32 +353,66 @@ export async function closeRepoTerminal(repoPath: string): Promise<void> {
 }
 
 /**
- * Navigate to the next/previous terminal across ALL terminals.
- * Uses vscode.window.terminals (flat list of every terminal including splits).
- * terminal.show() focuses the exact pane, even inside a split group.
+ * Tracks which terminals we've visited in the current split group.
+ * Used to detect when focusNextPane/focusPreviousPane wraps around.
+ */
+const groupVisited = new Set<vscode.Terminal>();
+
+/**
+ * Navigate to the next/previous terminal, traversing split panes within
+ * groups before moving to the next group. Uses VS Code native commands
+ * to respect visual order.
+ *
+ * Strategy:
+ * 1. Try focusNextPane to move within the current split group
+ * 2. If terminal didn't change (single pane) → focusNext to next group
+ * 3. If landed on a visited terminal (wrapped within group) → focusNext
+ *
  * direction: 1 = next (down), -1 = previous (up)
  */
 export async function navigateTerminal(direction: 1 | -1, allRepoPaths: string[]): Promise<string | undefined> {
-  const all = [...vscode.window.terminals];
-  if (all.length === 0) {
+  if (vscode.window.terminals.length === 0) {
     vscode.window.showInformationMessage("Diffchestrator: No terminals open.");
     return undefined;
   }
 
-  const active = vscode.window.activeTerminal;
-  let idx = active ? all.indexOf(active) : -1;
-
-  if (idx === -1) {
-    idx = direction === 1 ? 0 : all.length - 1;
-  } else {
-    idx = (idx + direction + all.length) % all.length;
+  // Ensure terminal panel is visible
+  if (!vscode.window.activeTerminal) {
+    await vscode.commands.executeCommand("workbench.action.terminal.focus");
+    await new Promise((r) => setTimeout(r, 50));
   }
 
-  const terminal = all[idx];
-  terminal.show(false);
+  const before = vscode.window.activeTerminal;
 
-  // Best-effort repo identification for auto-select
-  return findRepoForTerminal(terminal, allRepoPaths);
+  // Reset visited set if we're on a terminal we haven't seen (user clicked elsewhere)
+  if (before && !groupVisited.has(before) && groupVisited.size > 0) {
+    groupVisited.clear();
+  }
+  if (before) groupVisited.add(before);
+
+  // Try moving within the split group first
+  const paneCmd = direction === 1
+    ? "workbench.action.terminal.focusNextPane"
+    : "workbench.action.terminal.focusPreviousPane";
+  await vscode.commands.executeCommand(paneCmd);
+  await new Promise((r) => setTimeout(r, 50));
+
+  const after = vscode.window.activeTerminal;
+
+  if (!after || after === before || groupVisited.has(after)) {
+    // Single pane (no change) or wrapped around to visited terminal → next group
+    groupVisited.clear();
+    const groupCmd = direction === 1
+      ? "workbench.action.terminal.focusNext"
+      : "workbench.action.terminal.focusPrevious";
+    await vscode.commands.executeCommand(groupCmd);
+    await new Promise((r) => setTimeout(r, 50));
+  }
+
+  const current = vscode.window.activeTerminal;
+  if (!current) return undefined;
+
+  return findRepoForTerminal(current, allRepoPaths);
 }
 
 export function registerTerminalCommand(
