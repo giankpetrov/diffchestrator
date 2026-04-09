@@ -939,8 +939,8 @@
       },
       {
         "command": "diffchestrator.closeTerminal",
-        "key": "alt+d alt+j",
-        "mac": "alt+d alt+j"
+        "key": "alt+d alt+k",
+        "mac": "alt+d alt+k"
       }
     ],
     "configuration": {
