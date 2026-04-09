@@ -414,7 +414,6 @@ async function moveToNextGroup(direction: 1 | -1): Promise<void> {
  * focusNextPane wraps silently, focusNext skips panes, and
  * vscode.window.terminals is in creation order (not visual).
  * Workaround: use Alt+D ↑/↓ for tabs + Alt+D J for panes within a group.
- * See: https://github.com/Andrevops/diffchestrator/issues/TBD
  *
  * direction: 1 = next (down), -1 = previous (up)
  */
