@@ -394,7 +394,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       }
       const name = path.basename(root);
       const terminal = vscode.window.createTerminal({
-        name: `Root: ${name}`,
+        name,
         cwd: root,
         iconPath: new vscode.ThemeIcon("folder-opened"),
       });
@@ -502,7 +502,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       }
       const addDirArgs = changedRepos.map((r) => `--add-dir ${escapeForTerminal(r.path)}`).join(" ");
       const terminal = vscode.window.createTerminal({
-        name: "Claude: Multi-Repo Review",
+        name: "Multi-repo Review",
         cwd: repoManager.currentRoot,
         iconPath: terminalIcon("claude"),
       });

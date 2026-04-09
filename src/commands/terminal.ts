@@ -130,23 +130,29 @@ const NAME_PATTERNS: Record<TerminalKind, RegExp[]> = {
 
 function buildPatterns(repoPath: string, kind: TerminalKind): RegExp[] {
   const name = escapeRegex(path.basename(repoPath));
+  // Match new icon-only names (just repo name) and legacy prefixed names
   switch (kind) {
     case "claude":
       return [
+        new RegExp(`^${name}$`),
         new RegExp(`^Claude:\\s*${name}$`, "i"),
         new RegExp(`^Claude Code[^]*${name}$`, "i"),
       ];
     case "yolo":
-      // yolo runs claude which renames the terminal, so also check Claude: prefix
       return [
+        new RegExp(`^${name}$`),
         new RegExp(`^YOLO:\\s*${name}$`, "i"),
       ];
     case "yolonew":
       return [
+        new RegExp(`^${name}$`),
         new RegExp(`^YOLONEW:\\s*${name}$`, "i"),
       ];
     case "shell":
-      return [new RegExp(`^DC:\\s*${name}$`, "i")];
+      return [
+        new RegExp(`^${name}$`),
+        new RegExp(`^DC:\\s*${name}$`, "i"),
+      ];
   }
 }
 
@@ -206,11 +212,12 @@ export function findRepoForTerminal(terminal: vscode.Terminal, allRepoPaths: str
   for (const rp of sorted) {
     const repoName = path.basename(rp);
     if (name.includes(repoName)) {
-      // Adopt into tracking map
+      // Adopt into tracking map — infer kind from name or legacy prefix
       const kind: TerminalKind =
         /claude/i.test(name) ? "claude" :
         /yolonew/i.test(name) ? "yolonew" :
-        /yolo/i.test(name) ? "yolo" : "shell";
+        /yolo/i.test(name) ? "yolo" :
+        /^DC:/i.test(name) ? "shell" : "shell";
       repoTerminals.set(key(rp, kind), terminal);
       return rp;
     }
@@ -242,7 +249,7 @@ export function getOrCreateTerminal(repoPath: string): vscode.Terminal {
 
   const name = path.basename(repoPath);
   const terminal = vscode.window.createTerminal({
-    name: `DC: ${name}`,
+    name,
     cwd: repoPath,
     iconPath: TERMINAL_ICONS.shell,
   });
@@ -521,7 +528,7 @@ export function registerTerminalCommand(
             .join(" ");
 
           const terminal = vscode.window.createTerminal({
-            name: "YOLO (multi-repo)",
+            name: "Multi-repo",
             cwd: repoManager.currentRoot,
             iconPath: TERMINAL_ICONS.yolo,
           });
@@ -537,7 +544,7 @@ export function registerTerminalCommand(
 
           const name = path.basename(singlePath);
           const terminal = vscode.window.createTerminal({
-            name: `YOLO: ${name}`,
+            name,
             cwd: singlePath,
             iconPath: TERMINAL_ICONS.yolo,
           });
@@ -567,7 +574,7 @@ export function registerTerminalCommand(
             .join(" ");
 
           const terminal = vscode.window.createTerminal({
-            name: "YOLONEW (multi-repo)",
+            name: "Multi-repo",
             cwd: repoManager.currentRoot,
             iconPath: TERMINAL_ICONS.yolonew,
           });
@@ -583,7 +590,7 @@ export function registerTerminalCommand(
 
           const name = path.basename(singlePath);
           const terminal = vscode.window.createTerminal({
-            name: `YOLONEW: ${name}`,
+            name,
             cwd: singlePath,
             iconPath: TERMINAL_ICONS.yolonew,
           });

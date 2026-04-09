@@ -25,7 +25,7 @@ export function registerClaudeCommands(
             .join(" ");
 
           const terminal = vscode.window.createTerminal({
-            name: "Claude Code (multi-repo)",
+            name: "Multi-repo",
             cwd: repoManager.currentRoot,
             iconPath: terminalIcon("claude"),
           });
@@ -42,7 +42,7 @@ export function registerClaudeCommands(
 
           const repoName = path.basename(singlePath);
           const terminal = vscode.window.createTerminal({
-            name: `Claude: ${repoName}`,
+            name: repoName,
             cwd: singlePath,
             iconPath: terminalIcon("claude"),
           });

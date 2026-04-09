@@ -225,7 +225,7 @@ export class DiffWebviewPanel {
       case "openTerminal": {
         const name = path.basename(msg.repoPath);
         const terminal = vscode.window.createTerminal({
-          name: `Terminal - ${name}`,
+          name,
           cwd: msg.repoPath,
           iconPath: terminalIcon("shell"),
         });
@@ -238,7 +238,7 @@ export class DiffWebviewPanel {
         const repoName = path.basename(rp);
 
         const terminal = vscode.window.createTerminal({
-          name: `Claude Code - ${repoName}`,
+          name: repoName,
           cwd: rp,
           iconPath: terminalIcon("claude"),
         });

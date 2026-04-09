@@ -433,7 +433,7 @@ export class DashboardWebviewPanel {
         if (repoPath) {
           const name = path.basename(repoPath);
           const terminal = vscode.window.createTerminal({
-            name: `DC: ${name}`,
+            name,
             cwd: repoPath,
             iconPath: terminalIcon("shell"),
           });
