@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.63.0
+
+### Features
+- Add cross-repo terminal navigation (Alt+D, ↑/↓)
+
 ## 0.62.1
 
 ### Bug Fixes
