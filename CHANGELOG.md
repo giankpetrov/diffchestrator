@@ -2,6 +2,14 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.68.3
+
+### Bug Fixes
+- Skip auto-terminal when repo already has any terminals open
+
+### Other
+- Document cross-root search, auto-terminals, force push, amend, sync all, stash drop
+
 ## 0.68.2
 
 ### Bug Fixes
