@@ -1004,8 +1004,10 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
         // Step 2: Select the repo
         repoManager.selectRepo(target.path);
 
-        // Step 3: Focus changed files view
-        await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+        // Step 3: Focus changed files view (only if diffchestrator sidebar is already active)
+        if (changedFilesView.visible || activeReposView.visible || repoTreeView.visible) {
+          await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+        }
 
         // Step 4: Switch terminal
         await showTerminalIfExists(target.path);
@@ -1279,7 +1281,10 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
           previousRepoPath = repoPath;
 
           repoManager.selectRepo(repoPath);
-          await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+          // Only steal sidebar focus if diffchestrator panel is already visible
+          if (changedFilesView.visible || activeReposView.visible || repoTreeView.visible) {
+            await vscode.commands.executeCommand(`${VIEW_CHANGED_FILES}.focus`);
+          }
           // Don't override user's terminal choice when triggered by clicking a terminal tab
           if (!suppressTerminalSwitch) {
             await showTerminalIfExists(repoPath);
