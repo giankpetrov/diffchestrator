@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.66.5
+
+### Bug Fixes
+- Suppress entire terminal change handler during navigate/cycle commands
+
 ## 0.66.4
 
 ### Bug Fixes
