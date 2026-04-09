@@ -1289,18 +1289,14 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
           const autoTerminals = vscode.workspace
             .getConfiguration("diffchestrator")
             .get<string[]>("autoTerminals", []);
-          // Count how many terminals already exist for this repo (tracked + untracked)
-          const repoName = path.basename(repoPath);
-          const existingCount = vscode.window.terminals.filter(
-            (t) => t.name === repoName || t.name.includes(repoName)
-          ).length;
+          // Skip entirely if repo already has ANY terminals (tracked or untracked)
+          const repoBasename = path.basename(repoPath);
+          const hasExistingTerminals = vscode.window.terminals.some(
+            (t) => t.name === repoBasename
+          );
           for (const kind of autoTerminals) {
-            // Skip if tracked terminal exists OR if untracked terminals already cover this repo
             if (getRepoTerminal(repoPath, kind as TerminalKind)) continue;
-            // Don't create more terminals than configured types if untracked ones exist
-            const trackedCount = (["claude", "yolo", "yolonew", "shell"] as TerminalKind[])
-              .filter((k) => !!getRepoTerminal(repoPath, k)).length;
-            if (existingCount > trackedCount) continue;
+            if (hasExistingTerminals) continue;
             if (kind === "shell") {
               await vscode.commands.executeCommand(CMD.openTerminal, { path: repoPath });
             } else if (kind === "yolo") {
