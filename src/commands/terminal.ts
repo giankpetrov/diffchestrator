@@ -353,61 +353,32 @@ export async function closeRepoTerminal(repoPath: string): Promise<void> {
 }
 
 /**
- * Get all diffchestrator terminals in VS Code's panel order.
- * Scans vscode.window.terminals by name to adopt untracked ones.
- * Returns [terminal, repoPath][] in the same order as the terminal panel.
- */
-function getAllTrackedTerminals(allRepoPaths: string[]): [vscode.Terminal, string][] {
-  const result: [vscode.Terminal, string][] = [];
-
-  // Iterate in panel order — vscode.window.terminals preserves visual order
-  for (const terminal of vscode.window.terminals) {
-    // Check if already tracked
-    let repoPath: string | undefined;
-    for (const [k, t] of repoTerminals) {
-      if (t === terminal) {
-        repoPath = k.split("::")[0];
-        break;
-      }
-    }
-
-    // Try to adopt untracked terminals by name
-    if (!repoPath) {
-      repoPath = findRepoForTerminal(terminal, allRepoPaths);
-    }
-
-    if (repoPath) {
-      result.push([terminal, repoPath]);
-    }
-  }
-
-  return result;
-}
-
-/**
- * Navigate to the next/previous terminal across all repos.
+ * Navigate to the next/previous terminal in VS Code's panel order.
+ * Includes ALL terminals, not just diffchestrator-tracked ones.
+ * Returns the repo path if the target terminal can be identified, for auto-select.
  * direction: 1 = next (down), -1 = previous (up)
  */
 export function navigateTerminal(direction: 1 | -1, allRepoPaths: string[]): string | undefined {
-  const all = getAllTrackedTerminals(allRepoPaths);
+  const all = vscode.window.terminals;
   if (all.length === 0) {
     vscode.window.showInformationMessage("Diffchestrator: No terminals open.");
     return undefined;
   }
 
   const active = vscode.window.activeTerminal;
-  let idx = active ? all.findIndex(([t]) => t === active) : -1;
+  let idx = active ? all.indexOf(active) : -1;
 
   if (idx === -1) {
-    // No active terminal or not tracked — show first/last
     idx = direction === 1 ? 0 : all.length - 1;
   } else {
     idx = (idx + direction + all.length) % all.length;
   }
 
-  const [terminal, repoPath] = all[idx];
+  const terminal = all[idx];
   terminal.show(false);
-  return repoPath;
+
+  // Best-effort repo identification for auto-select
+  return findRepoForTerminal(terminal, allRepoPaths);
 }
 
 export function registerTerminalCommand(
