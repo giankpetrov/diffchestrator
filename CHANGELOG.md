@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.63.3
+
+### Bug Fixes
+- Navigate all terminals not just tracked ones
+
 ## 0.63.2
 
 ### Bug Fixes
