@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.67.2
+
+### Bug Fixes
+- Switch scan root when navigating to terminal in different root
+
 ## 0.67.1
 
 ### Bug Fixes
