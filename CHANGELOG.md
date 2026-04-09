@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.68.4
+
+### Other
+- Add claude-sandbox repo links for yolo/yolonew setup
+
 ## 0.68.3
 
 ### Bug Fixes
