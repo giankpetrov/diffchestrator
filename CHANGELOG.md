@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.66.1
+
+### Bug Fixes
+- Adopt existing terminals on activation via icon-based kind inference
+
 ## 0.66.0
 
 ### Features
