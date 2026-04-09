@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.66.4
+
+### Bug Fixes
+- Suppress terminal auto-switch during cycle and navigate commands
+
 ## 0.66.3
 
 ### Bug Fixes
