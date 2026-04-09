@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.63.7
+
+### Bug Fixes
+- Use event-based terminal change detection for reliable split navigation
+
 ## 0.63.6
 
 ### Bug Fixes
