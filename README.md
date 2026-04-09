@@ -76,6 +76,7 @@ Diffchestrator doesn't require Claude to run inside VS Code. The file watcher mo
 - **Claude Multi-Repo Review** — opens Claude with `--add-dir` for all repos with changes and a review prompt
 - **Ask Claude** button per diff hunk in the multi-repo diff webview
 - **Per-repo terminal tracking** — each repo tracks its own Claude, Yolo, Yolonew, and shell terminals independently. Switching repos auto-switches the terminal panel to the correct session
+- **Terminal icons** — each terminal type has a distinct colored icon: ✨ Claude (yellow), 🔥 Yolo (red), ⚡ Yolonew (cyan), 📟 Shell (default). Terminal tabs show only the repo name — icons identify the type
 - **Terminal reuse** — `Alt+D, L`, `Alt+D, Y`, and `Alt+D, Alt+Y` reuse existing sessions instead of spawning new ones
 - **CLI validation** — checks that `claude` and `docker` are installed before launching terminals
 
@@ -85,7 +86,7 @@ Diffchestrator doesn't require Claude to run inside VS Code. The file watcher mo
 - **Persisted across reloads** — active repos, selection, and current scan root survive VS Code restarts
 - **Cycle repos** — `Alt+D, Tab` cycles through all opened repos including favorites, switching the changed files view, terminal, and diff editor in one keystroke
 - **Close active repos** — `Alt+D, Q` closes current, `Alt+D, Shift+Q` picks which to close, `Alt+D, Shift+Tab` closes all
-- **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Yolonew, Shell)
+- **Terminal indicators** — each repo shows which terminal types are running (Claude, Yolo, Yolonew, Shell) via icon badges
 - **Auto-switch terminal** — clicking a repo in Active Repos or Repositories auto-surfaces that repo's terminal (priority: Claude > Yolo > Yolonew > Shell)
 - **Cycle terminal** — `Alt+D, J` rotates through all alive terminals for the current repo (Claude → Yolo → Yolonew → Shell)
 - **Navigate terminals** — `Alt+D, ↑/↓` moves between terminal tabs across repos, auto-selecting the target repo. For split panes within the same tab, use `Alt+D, J` to cycle between them (VS Code doesn't expose terminal group structure to extensions, so combined navigation is best-effort)

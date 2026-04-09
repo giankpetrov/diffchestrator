@@ -61,6 +61,8 @@ make publish-openvsx      # Open VSX only
 - **Git executor**: use `repoManager.git` (shared singleton), never `new GitExecutor()`
 - **Dashboard messages**: extension ↔ webview via `postMessage`/`onDidReceiveMessage`
 - **No external dependencies**: extension uses only VS Code API + Node built-ins
+- **Terminal icons**: use `terminalIcon(kind)` from `commands/terminal.ts` for all `createTerminal` calls — terminal names are bare repo names (no prefixes), icons distinguish type
+- **Terminal tracking**: icon-only terminals rely on the `repoTerminals` map, not name patterns. `buildPatterns` only matches legacy prefixed names for backward compat
 
 ## Testing
 
