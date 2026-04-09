@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.65.2
+
+### Other
+- Document terminal icons, management shortcuts, and tracking conventions
+
 ## 0.65.1
 
 ### Bug Fixes
