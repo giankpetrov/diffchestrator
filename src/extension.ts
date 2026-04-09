@@ -26,7 +26,7 @@ import { FileWatcher } from "./services/fileWatcher";
 import { InlineBlameService } from "./services/inlineBlame";
 import { WorkspaceAutoScan } from "./services/workspaceAutoScan";
 // GitExecutor accessed via repoManager.git (shared instance)
-import { showTerminalIfExists, findRepoForTerminal, cycleTerminal, closeRepoTerminal, navigateTerminal } from "./commands/terminal";
+import { showTerminalIfExists, findRepoForTerminal, cycleTerminal, closeRepoTerminal, navigateTerminal, terminalIcon } from "./commands/terminal";
 import { extractTabUri } from "./types";
 import * as path from "path";
 
@@ -396,6 +396,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       const terminal = vscode.window.createTerminal({
         name: `Root: ${name}`,
         cwd: root,
+        iconPath: new vscode.ThemeIcon("folder-opened"),
       });
       terminal.show();
     })
@@ -503,6 +504,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       const terminal = vscode.window.createTerminal({
         name: "Claude: Multi-Repo Review",
         cwd: repoManager.currentRoot,
+        iconPath: terminalIcon("claude"),
       });
       terminal.show();
       const prompt = "Review the changes across all these repositories. Summarize what changed, flag any issues, and suggest improvements.";

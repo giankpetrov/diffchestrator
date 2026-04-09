@@ -3,7 +3,7 @@ import * as path from "path";
 import { RepoManager } from "../services/repoManager";
 import type { CommitEntry, DashboardMessage } from "../types";
 import { CMD } from "../constants";
-import { showTerminalIfExists } from "../commands/terminal";
+import { showTerminalIfExists, terminalIcon } from "../commands/terminal";
 
 interface DiffStatSummary {
   files: string[];
@@ -435,6 +435,7 @@ export class DashboardWebviewPanel {
           const terminal = vscode.window.createTerminal({
             name: `DC: ${name}`,
             cwd: repoPath,
+            iconPath: terminalIcon("shell"),
           });
           terminal.show();
         }

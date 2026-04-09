@@ -10,6 +10,19 @@ const execFileAsync = promisify(execFile);
 
 export type TerminalKind = "shell" | "claude" | "yolo" | "yolonew";
 
+/** Terminal icon + color per kind */
+const TERMINAL_ICONS: Record<TerminalKind, vscode.ThemeIcon> = {
+  claude: new vscode.ThemeIcon("sparkle", new vscode.ThemeColor("terminal.ansiYellow")),
+  yolo: new vscode.ThemeIcon("flame", new vscode.ThemeColor("terminal.ansiRed")),
+  yolonew: new vscode.ThemeIcon("zap", new vscode.ThemeColor("terminal.ansiCyan")),
+  shell: new vscode.ThemeIcon("terminal"),
+};
+
+/** Get the icon for a terminal kind. Exported for use in other modules. */
+export function terminalIcon(kind: TerminalKind): vscode.ThemeIcon {
+  return TERMINAL_ICONS[kind];
+}
+
 /**
  * Check if a command exists on the system.
  */
@@ -231,6 +244,7 @@ export function getOrCreateTerminal(repoPath: string): vscode.Terminal {
   const terminal = vscode.window.createTerminal({
     name: `DC: ${name}`,
     cwd: repoPath,
+    iconPath: TERMINAL_ICONS.shell,
   });
   repoTerminals.set(key(repoPath, "shell"), terminal);
   return terminal;
@@ -509,6 +523,7 @@ export function registerTerminalCommand(
           const terminal = vscode.window.createTerminal({
             name: "YOLO (multi-repo)",
             cwd: repoManager.currentRoot,
+            iconPath: TERMINAL_ICONS.yolo,
           });
           terminal.show();
           terminal.sendText(`yolo ${addDirArgs}`);
@@ -524,6 +539,7 @@ export function registerTerminalCommand(
           const terminal = vscode.window.createTerminal({
             name: `YOLO: ${name}`,
             cwd: singlePath,
+            iconPath: TERMINAL_ICONS.yolo,
           });
           repoTerminals.set(key(singlePath, "yolo"), terminal);
           terminal.show();
@@ -553,6 +569,7 @@ export function registerTerminalCommand(
           const terminal = vscode.window.createTerminal({
             name: "YOLONEW (multi-repo)",
             cwd: repoManager.currentRoot,
+            iconPath: TERMINAL_ICONS.yolonew,
           });
           terminal.show();
           terminal.sendText(`yolonew ${addDirArgs}`);
@@ -568,6 +585,7 @@ export function registerTerminalCommand(
           const terminal = vscode.window.createTerminal({
             name: `YOLONEW: ${name}`,
             cwd: singlePath,
+            iconPath: TERMINAL_ICONS.yolonew,
           });
           repoTerminals.set(key(singlePath, "yolonew"), terminal);
           terminal.show();

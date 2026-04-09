@@ -3,6 +3,7 @@ import * as path from "path";
 import { RepoManager } from "../services/repoManager";
 import type { RepoStatus, DiffWebviewMessage } from "../types";
 import { escapeForTerminal } from "../utils/shell";
+import { terminalIcon } from "../commands/terminal";
 
 export class DiffWebviewPanel {
   public static currentPanel: DiffWebviewPanel | undefined;
@@ -226,6 +227,7 @@ export class DiffWebviewPanel {
         const terminal = vscode.window.createTerminal({
           name: `Terminal - ${name}`,
           cwd: msg.repoPath,
+          iconPath: terminalIcon("shell"),
         });
         terminal.show();
         break;
@@ -238,6 +240,7 @@ export class DiffWebviewPanel {
         const terminal = vscode.window.createTerminal({
           name: `Claude Code - ${repoName}`,
           cwd: rp,
+          iconPath: terminalIcon("claude"),
         });
         terminal.show();
 

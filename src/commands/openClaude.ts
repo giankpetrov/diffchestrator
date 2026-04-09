@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import type { RepoManager } from "../services/repoManager";
 import { CMD } from "../constants";
-import { registerRepoTerminal, getRepoTerminal, validateCli } from "./terminal";
+import { registerRepoTerminal, getRepoTerminal, validateCli, terminalIcon } from "./terminal";
 import { escapeForTerminal } from "../utils/shell";
 
 export function registerClaudeCommands(
@@ -27,6 +27,7 @@ export function registerClaudeCommands(
           const terminal = vscode.window.createTerminal({
             name: "Claude Code (multi-repo)",
             cwd: repoManager.currentRoot,
+            iconPath: terminalIcon("claude"),
           });
           terminal.show();
           terminal.sendText(`claude ${addDirArgs}`);
@@ -43,6 +44,7 @@ export function registerClaudeCommands(
           const terminal = vscode.window.createTerminal({
             name: `Claude: ${repoName}`,
             cwd: singlePath,
+            iconPath: terminalIcon("claude"),
           });
           registerRepoTerminal(singlePath, "claude", terminal);
           terminal.show();
