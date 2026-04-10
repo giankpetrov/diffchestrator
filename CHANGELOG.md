@@ -2,6 +2,18 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.70.0
+
+### Features
+- Animate individual SVG elements — cascading node pulses, breathing branches
+
+### Bug Fixes
+- Restore terminal focus after repo switch and match terminal kind across repos
+- Regenerate animated icon with transparent background
+
+### Other
+- Add animated icon to README header
+
 ## 0.69.2
 
 ### Bug Fixes
