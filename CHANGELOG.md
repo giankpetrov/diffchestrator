@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.70.1
+
+### Bug Fixes
+- Ensure Alt+D chord shortcuts work when terminal is focused
+
 ## 0.70.0
 
 ### Features
