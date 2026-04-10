@@ -131,6 +131,8 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
           } finally {
             suppressTerminalSwitch = false;
           }
+          // viewDiff steals focus to sidebar/editor — restore it to the terminal the user clicked
+          terminal.show(false);
         }
         return;
       }
@@ -140,6 +142,8 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       if (match) {
         await vscode.commands.executeCommand(CMD.switchRoot, match.root);
         await vscode.commands.executeCommand(CMD.viewDiff, { path: match.path });
+        // Restore focus to the terminal the user clicked
+        terminal.show(false);
       }
     })
   );

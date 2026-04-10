@@ -353,14 +353,29 @@ export function hasActiveTerminal(repoPath: string): boolean {
  * Returns focus to editor after switching.
  */
 export async function showTerminalIfExists(repoPath: string): Promise<boolean> {
-  // Priority: claude > yolo > shell
   const kinds: TerminalKind[] = ["claude", "yolo", "yolonew", "shell"];
+
+  // Prefer the same kind as the currently active terminal so switching repos
+  // keeps the user on the same terminal type (e.g. shell → shell, claude → claude)
+  const active = vscode.window.activeTerminal;
+  if (active) {
+    const activeKind = inferKindFromIcon(active);
+    if (activeKind) {
+      const sameKind = getAlive(repoPath, activeKind);
+      if (sameKind) {
+        sameKind.show(false);
+        await new Promise((r) => setTimeout(r, 150));
+        await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+        return true;
+      }
+    }
+  }
+
+  // Fallback: first alive terminal by priority
   for (const kind of kinds) {
     const existing = getAlive(repoPath, kind);
     if (existing) {
-      // show(false) takes focus to force the terminal panel to switch tabs
       existing.show(false);
-      // Wait for the tab switch to settle, then return focus to editor
       await new Promise((r) => setTimeout(r, 150));
       await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
       return true;
