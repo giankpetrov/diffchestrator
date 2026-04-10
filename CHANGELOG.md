@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.69.0
+
+### Features
+- Add directory entries to Active Repos with full terminal lifecycle
+
 ## 0.68.6
 
 ### Bug Fixes
