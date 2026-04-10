@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="resources/icons/icon-animated.gif" alt="Diffchestrator" width="128" />
+</p>
+
 # Diffchestrator — VS Code Extension
 
 > **Built for Claude Code.** Multi-repo Git orchestration designed as a companion to [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — Anthropic's CLI for agentic coding. Stage, review, and commit across repos without leaving VS Code, then hand off to Claude for AI-powered commits, code reviews, and multi-repo workflows.
