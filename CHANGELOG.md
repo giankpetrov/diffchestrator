@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.69.2
+
+### Bug Fixes
+- Rebind cross-root repo search from Alt+D Alt+F to Alt+D Alt+R
+
 ## 0.69.1
 
 ### Bug Fixes
