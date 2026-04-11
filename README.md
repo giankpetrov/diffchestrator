@@ -565,3 +565,9 @@ interface DiffchestratorApi {
   onDidChangeSelection: vscode.Event<void>;
 }
 ```
+
+## Collaboration
+
+### [@giankpetrov](https://github.com/giankpetrov)
+
+Hardened the codebase with security-focused tests and performance improvements. Added path traversal prevention tests for GitExecutor, git ref validation tests that caught a `stash@{N}` bug, and improved DisposableStore error resilience. Also optimized `switchRepo` sorting from O(N^2) to O(1) lookups — ~590x faster on large repo sets.
