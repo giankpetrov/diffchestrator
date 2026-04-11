@@ -3,7 +3,7 @@ import { RepoManager } from "./services/repoManager";
 import { RepoTreeProvider } from "./providers/repoTreeProvider";
 import { ChangedFilesProvider } from "./providers/changedFilesProvider";
 import { escapeForTerminal } from "./utils/shell";
-import { CMD, CONFIG, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_CHANGED_FILES } from "./constants";
+import { CMD, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_CHANGED_FILES } from "./constants";
 import { registerScanCommands } from "./commands/scan";
 import { registerStageCommands, openNextPendingFile, openFileDiff } from "./commands/stage";
 import { registerCommitCommands } from "./commands/commit";
@@ -240,52 +240,8 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
     }
   };
 
-  // Track workspace folders added by syncWorkspace so we never touch the user's original folders
-  const syncedFolders = new Set<string>();
-
-  const syncWorkspaceWithSelection = () => {
-    const config = vscode.workspace.getConfiguration();
-    if (!config.get<boolean>(CONFIG.syncWorkspace, false)) return;
-
-    const selected = repoManager.selectedRepo;
-    const folders = vscode.workspace.workspaceFolders || [];
-
-    // Find the old synced folder to replace (if any)
-    let oldIdx = -1;
-    for (const synced of syncedFolders) {
-      if (synced === selected) break;
-      oldIdx = folders.findIndex(f => f.uri.fsPath === synced);
-      syncedFolders.delete(synced);
-    }
-
-    if (!selected) {
-      // No selection — just remove the old synced folder
-      if (oldIdx !== -1) vscode.workspace.updateWorkspaceFolders(oldIdx, 1);
-      return;
-    }
-
-    // Already present in workspace — nothing to do
-    if (folders.some(f => f.uri.fsPath === selected)) {
-      syncedFolders.add(selected);
-      return;
-    }
-
-    // Single atomic call: replace old synced folder, or append new one
-    if (oldIdx !== -1) {
-      // Swap old folder for new in one call — stays multi-root, no reload
-      vscode.workspace.updateWorkspaceFolders(oldIdx, 1, { uri: vscode.Uri.file(selected) });
-    } else {
-      // First sync — add at end (one-time transition to multi-root)
-      vscode.workspace.updateWorkspaceFolders(folders.length, 0, { uri: vscode.Uri.file(selected) });
-    }
-    syncedFolders.add(selected);
-  };
-
   repoManager.onDidChangeRepos(updateViewInfo);
-  repoManager.onDidChangeSelection(() => {
-    updateViewInfo();
-    syncWorkspaceWithSelection();
-  });
+  repoManager.onDidChangeSelection(updateViewInfo);
 
   // Notifications when Claude/external tools commit or modify files
   // Queue notifications when unfocused, show grouped summary on refocus

@@ -650,7 +650,6 @@ export class DashboardWebviewPanel {
             changedOnlyDefault: cfg.get<boolean>("changedOnlyDefault", false),
             showFavorites: cfg.get<boolean>("showFavorites", true),
             showInlineBlame: cfg.get<boolean>("showInlineBlame", true),
-            syncWorkspace: cfg.get<boolean>("syncWorkspace", false),
             claudePermissionMode: cfg.get<string>("claudePermissionMode", "acceptEdits"),
             autoPushAfterCommit: cfg.get<boolean>("autoPushAfterCommit", false),
             pinnedRepos: cfg.get<string[]>("pinnedRepos", []),

@@ -90,7 +90,6 @@ export const CONFIG = {
   scanExtraSkipDirs: "diffchestrator.scanExtraSkipDirs",
   scanOnStartup: "diffchestrator.scanOnStartup",
   changedOnlyDefault: "diffchestrator.changedOnlyDefault",
-  syncWorkspace: "diffchestrator.syncWorkspace",
   autoRefreshInterval: "diffchestrator.autoRefreshInterval",
   favorites: "diffchestrator.favorites",
   claudePermissionMode: "diffchestrator.claudePermissionMode",

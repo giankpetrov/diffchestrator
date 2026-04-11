@@ -11,7 +11,6 @@ interface Settings {
   changedOnlyDefault: boolean;
   showFavorites: boolean;
   showInlineBlame: boolean;
-  syncWorkspace: boolean;
   claudePermissionMode: string;
   autoPushAfterCommit: boolean;
   pinnedRepos: string[];
@@ -184,12 +183,6 @@ export default function SettingsPanel() {
           description="Show inline git blame annotation on the current line"
           value={settings.showInlineBlame}
           onChange={(v) => update("showInlineBlame", v)}
-        />
-        <SettingToggle
-          label="Sync Workspace"
-          description="Automatically sync the VS Code Explorer workspace folders to the currently selected repository"
-          value={settings.syncWorkspace}
-          onChange={(v) => update("syncWorkspace", v)}
         />
         <SettingNumber
           label="Auto-Refresh Interval"
