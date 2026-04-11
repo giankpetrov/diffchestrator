@@ -251,6 +251,12 @@
         "icon": "$(terminal)"
       },
       {
+        "command": "diffchestrator.openClaudeCodeNew",
+        "title": "Open Claude Code (New Session)",
+        "category": "Diffchestrator",
+        "icon": "$(add)"
+      },
+      {
         "command": "diffchestrator.yolo",
         "title": "Yolo (Claude Sandbox)",
         "category": "Diffchestrator",
@@ -824,6 +830,11 @@
         "mac": "alt+d l"
       },
       {
+        "command": "diffchestrator.openClaudeCodeNew",
+        "key": "alt+d alt+l",
+        "mac": "alt+d alt+l"
+      },
+      {
         "command": "diffchestrator.yolo",
         "key": "alt+d y",
         "mac": "alt+d y"
@@ -1106,6 +1117,7 @@
             "enum": [
               "shell",
               "claude",
+              "claudenew",
               "yolo",
               "yolonew"
             ]

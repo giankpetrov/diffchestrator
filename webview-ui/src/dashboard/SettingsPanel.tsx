@@ -226,6 +226,7 @@ export default function SettingsPanel() {
               ["yolo", "Yolo"],
               ["yolonew", "Yolonew"],
               ["claude", "Claude"],
+              ["claudenew", "Claude (new)"],
             ] as const).map(([kind, label]) => (
               <label key={kind} className="setting-checkbox-label">
                 <input

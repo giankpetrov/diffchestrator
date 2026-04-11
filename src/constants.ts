@@ -22,6 +22,7 @@ export const CMD = {
   bulkCommit: "diffchestrator.bulkCommit",
   bulkPush: "diffchestrator.bulkPush",
   openClaudeCode: "diffchestrator.openClaudeCode",
+  openClaudeCodeNew: "diffchestrator.openClaudeCodeNew",
   searchFiles: "diffchestrator.searchFiles",
   browseFiles: "diffchestrator.browseFiles",
   openTerminal: "diffchestrator.openTerminal",

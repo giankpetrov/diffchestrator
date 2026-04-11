@@ -53,7 +53,59 @@ export function registerClaudeCommands(
           });
           registerRepoTerminal(singlePath, "claude", terminal);
           terminal.show();
-          terminal.sendText("claude -c");
+          terminal.sendText("claude -c 2>/dev/null || claude");
+        } else {
+          vscode.window.showWarningMessage(
+            "Diffchestrator: No repository selected. Select a repo first."
+          );
+        }
+      }
+    )
+  );
+
+  // Claude (new session) — always starts fresh, never continues
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      CMD.openClaudeCodeNew,
+      async (item?: any) => {
+        if (!(await validateCli("claude"))) return;
+
+        const selectedPaths = repoManager.selectedRepoPaths;
+        const singlePath = resolveRepoPath(item, repoManager.selectedRepo);
+
+        if (selectedPaths.size > 1) {
+          const addDirArgs = [...selectedPaths]
+            .map((p) => `--add-dir ${escapeForTerminal(p)}`)
+            .join(" ");
+
+          const terminal = vscode.window.createTerminal({
+            name: "Multi-repo",
+            cwd: repoManager.currentRoot,
+            iconPath: terminalIcon("claudenew"),
+          });
+          terminal.show();
+          terminal.sendText(`claude ${addDirArgs}`);
+        } else if (singlePath) {
+          if (!repoManager.getRepo(singlePath)) {
+            repoManager.addDirectoryPath(singlePath);
+          } else {
+            repoManager.selectRepo(singlePath);
+          }
+          const existing = getRepoTerminal(singlePath, "claudenew");
+          if (existing) {
+            existing.show();
+            return;
+          }
+
+          const repoName = path.basename(singlePath);
+          const terminal = vscode.window.createTerminal({
+            name: repoName,
+            cwd: singlePath,
+            iconPath: terminalIcon("claudenew"),
+          });
+          registerRepoTerminal(singlePath, "claudenew", terminal);
+          terminal.show();
+          terminal.sendText("claude");
         } else {
           vscode.window.showWarningMessage(
             "Diffchestrator: No repository selected. Select a repo first."

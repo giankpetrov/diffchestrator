@@ -1322,6 +1322,8 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
               await vscode.commands.executeCommand(CMD.yolonew, { path: repoPath });
             } else if (kind === "claude") {
               await vscode.commands.executeCommand(CMD.openClaudeCode, { path: repoPath });
+            } else if (kind === "claudenew") {
+              await vscode.commands.executeCommand(CMD.openClaudeCodeNew, { path: repoPath });
             }
           }
         } finally {

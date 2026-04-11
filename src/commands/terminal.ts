@@ -9,11 +9,12 @@ import { resolveRepoPath } from "../utils/fileItem";
 
 const execFileAsync = promisify(execFile);
 
-export type TerminalKind = "shell" | "claude" | "yolo" | "yolonew";
+export type TerminalKind = "shell" | "claude" | "claudenew" | "yolo" | "yolonew";
 
 /** Terminal icon + color per kind */
 const TERMINAL_ICONS: Record<TerminalKind, vscode.ThemeIcon> = {
   claude: new vscode.ThemeIcon("sparkle", new vscode.ThemeColor("terminal.ansiYellow")),
+  claudenew: new vscode.ThemeIcon("add", new vscode.ThemeColor("terminal.ansiYellow")),
   yolo: new vscode.ThemeIcon("flame", new vscode.ThemeColor("terminal.ansiRed")),
   yolonew: new vscode.ThemeIcon("zap", new vscode.ThemeColor("terminal.ansiCyan")),
   shell: new vscode.ThemeIcon("terminal"),
@@ -113,6 +114,7 @@ function inferKindFromIcon(terminal: vscode.Terminal): TerminalKind | undefined 
   const icon = opts?.iconPath;
   if (icon instanceof vscode.ThemeIcon) {
     if (icon.id === "sparkle") return "claude";
+    if (icon.id === "add") return "claudenew";
     if (icon.id === "flame") return "yolo";
     if (icon.id === "zap") return "yolonew";
     if (icon.id === "terminal") return "shell";
@@ -177,6 +179,7 @@ vscode.window.onDidCloseTerminal((t) => {
  */
 const NAME_PATTERNS: Record<TerminalKind, RegExp[]> = {
   claude: [], // built dynamically from repo name
+  claudenew: [],
   yolo: [],
   yolonew: [],
   shell: [],
@@ -192,6 +195,8 @@ function buildPatterns(repoPath: string, kind: TerminalKind): RegExp[] {
         new RegExp(`^Claude:\\s*${name}$`, "i"),
         new RegExp(`^Claude Code[^]*${name}$`, "i"),
       ];
+    case "claudenew":
+      return [];
     case "yolo":
       return [
         new RegExp(`^YOLO:\\s*${name}$`, "i"),
@@ -293,7 +298,7 @@ export function findRepoForTerminal(terminal: vscode.Terminal, allRepoPaths: str
       const existing = repoTerminals.get(key(rp, kind));
       if (existing && existing !== terminal && vscode.window.terminals.includes(existing)) {
         // Slot taken — try other kinds
-        const allKinds: TerminalKind[] = ["claude", "yolo", "yolonew", "shell"];
+        const allKinds: TerminalKind[] = ["claude", "claudenew", "yolo", "yolonew", "shell"];
         const freeKind = allKinds.find((k) => {
           const t = repoTerminals.get(key(rp, k));
           return !t || t === terminal || !vscode.window.terminals.includes(t);
@@ -344,7 +349,7 @@ export function getOrCreateTerminal(repoPath: string): vscode.Terminal {
  * Check if a repo has any active terminal (any kind).
  */
 export function hasActiveTerminal(repoPath: string): boolean {
-  const kinds: TerminalKind[] = ["claude", "yolo", "yolonew", "shell"];
+  const kinds: TerminalKind[] = ["claude", "claudenew", "yolo", "yolonew", "shell"];
   return kinds.some((k) => !!getAlive(repoPath, k));
 }
 
@@ -353,7 +358,7 @@ export function hasActiveTerminal(repoPath: string): boolean {
  * Returns focus to editor after switching.
  */
 export async function showTerminalIfExists(repoPath: string): Promise<boolean> {
-  const kinds: TerminalKind[] = ["claude", "yolo", "yolonew", "shell"];
+  const kinds: TerminalKind[] = ["claude", "claudenew", "yolo", "yolonew", "shell"];
 
   // Prefer the same kind as the currently active terminal so switching repos
   // keeps the user on the same terminal type (e.g. shell → shell, claude → claude)
@@ -384,7 +389,7 @@ export async function showTerminalIfExists(repoPath: string): Promise<boolean> {
   return false;
 }
 
-const CYCLE_ORDER: TerminalKind[] = ["claude", "yolo", "yolonew", "shell"];
+const CYCLE_ORDER: TerminalKind[] = ["claude", "claudenew", "yolo", "yolonew", "shell"];
 
 /**
  * Get all alive terminal kinds for a repo, in cycle order.
