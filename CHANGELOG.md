@@ -2,6 +2,15 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.71.0
+
+### Features
+- Sync VS Code workspace with selected repository
+- Sync VS Code workspace with selected repository
+
+### Other
+- Add collaboration section crediting @giankpetrov contributions
+
 ## 0.70.2
 
 ### Other
