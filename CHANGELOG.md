@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.71.2
+
+### Bug Fixes
+- Atomic workspace folder swap to prevent double extension host reload
+
 ## 0.71.1
 
 ### Bug Fixes
