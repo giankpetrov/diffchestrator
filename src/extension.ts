@@ -240,8 +240,28 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
     }
   };
 
+  const syncWorkspaceWithSelection = () => {
+    const config = vscode.workspace.getConfiguration("diffchestrator");
+    if (!config.get<boolean>("syncWorkspace", false)) return;
+
+    const selected = repoManager.selectedRepo;
+    if (!selected) return;
+
+    const folders = vscode.workspace.workspaceFolders || [];
+
+    // Check if the current workspace exactly matches the selected repo
+    // to avoid unnecessary extension host restarts or UI flashing
+    if (folders.length === 1 && folders[0].uri.fsPath === selected) return;
+
+    // Replace all existing workspace folders with the single selected repository
+    vscode.workspace.updateWorkspaceFolders(0, folders.length, { uri: vscode.Uri.file(selected) });
+  };
+
   repoManager.onDidChangeRepos(updateViewInfo);
-  repoManager.onDidChangeSelection(updateViewInfo);
+  repoManager.onDidChangeSelection(() => {
+    updateViewInfo();
+    syncWorkspaceWithSelection();
+  });
 
   // Notifications when Claude/external tools commit or modify files
   // Queue notifications when unfocused, show grouped summary on refocus
