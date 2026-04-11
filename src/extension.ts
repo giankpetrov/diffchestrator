@@ -249,12 +249,13 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
 
     const folders = vscode.workspace.workspaceFolders || [];
 
-    // Check if the current workspace exactly matches the selected repo
-    // to avoid unnecessary extension host restarts or UI flashing
-    if (folders.length === 1 && folders[0].uri.fsPath === selected) return;
+    // Check if the selected repo is already in the workspace
+    // If it is, we don't need to do anything, avoiding unnecessary restarts
+    if (folders.some(f => f.uri.fsPath === selected)) return;
 
-    // Replace all existing workspace folders with the single selected repository
-    vscode.workspace.updateWorkspaceFolders(0, folders.length, { uri: vscode.Uri.file(selected) });
+    // Append the selected repository as a new root folder instead of replacing existing ones.
+    // This creates a multi-root workspace and prevents VS Code from reloading the window.
+    vscode.workspace.updateWorkspaceFolders(folders.length, 0, { uri: vscode.Uri.file(selected) });
   };
 
   repoManager.onDidChangeRepos(updateViewInfo);
