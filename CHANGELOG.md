@@ -2,6 +2,11 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.71.1
+
+### Bug Fixes
+- Use additive workspace folder sync to prevent extension host reloads
+
 ## 0.71.0
 
 ### Features
