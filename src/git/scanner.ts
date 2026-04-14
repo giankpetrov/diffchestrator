@@ -84,7 +84,14 @@ export class Scanner extends EventEmitter {
       try {
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
         for (const entry of entries) {
-          const isDir = entry.isDirectory();
+          let isDir = entry.isDirectory();
+          // 9p/drvfs mounts may report DT_UNKNOWN — fall back to statSync
+          if (!isDir && !entry.isFile() && !entry.isSymbolicLink()) {
+            try {
+              isDir = fs.statSync(path.join(dirPath, entry.name)).isDirectory();
+              if (isDir) this._log?.(`[scan] stat fallback: "${entry.name}" is dir (Dirent was unknown) in ${dirPath}`);
+            } catch { /* stat failed — treat as non-dir */ }
+          }
           const skipped = this.extraSkipDirs.has(entry.name);
           if (isDir && !skipped) {
             queue.push({
