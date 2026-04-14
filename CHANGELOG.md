@@ -2,6 +2,69 @@
 
 All notable changes to Diffchestrator are documented here. Generated from conventional commits.
 
+## 0.73.1
+
+### Bug Fixes
+- Fall back to statSync when Dirent reports unknown type on 9p/drvfs
+
+## 0.73.0
+
+### Features
+- Claude continue fallback + claudenew terminal kind for fresh sessions
+- Sync VS Code workspace with selected repository
+- Sync VS Code workspace with selected repository
+
+### Bug Fixes
+- Detect .git on 9p/drvfs mounts where statSync reports wrong type
+- Use user's default shell for alias detection (fixes yolo on macOS/zsh)
+- Atomic workspace folder swap to prevent double extension host reload
+- Use additive workspace folder sync to prevent extension host reloads
+
+### Other
+- Add collaboration section and fix stale Claudenew references in README
+- Document macOS support for claude-sandbox integration
+- Remove syncWorkspace feature (causes unavoidable extension host reloads)
+- Add collaboration section crediting @giankpetrov contributions
+
+## 0.72.2
+
+### Other
+- Document macOS support for claude-sandbox integration
+
+## 0.72.1
+
+### Bug Fixes
+- Use user's default shell for alias detection (fixes yolo on macOS/zsh)
+
+## 0.72.0
+
+### Features
+- Claude continue fallback + claudenew terminal kind for fresh sessions
+
+## 0.71.3
+
+### Other
+- Remove syncWorkspace feature (causes unavoidable extension host reloads)
+
+## 0.71.2
+
+### Bug Fixes
+- Atomic workspace folder swap to prevent double extension host reload
+
+## 0.71.1
+
+### Bug Fixes
+- Use additive workspace folder sync to prevent extension host reloads
+
+## 0.71.0
+
+### Features
+- Sync VS Code workspace with selected repository
+- Sync VS Code workspace with selected repository
+
+### Other
+- Add collaboration section crediting @giankpetrov contributions
+
 ## 0.70.2
 
 ### Other

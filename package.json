@@ -2,7 +2,7 @@
   "name": "diffchestrator",
   "displayName": "Diffchestrator",
   "description": "Multi-repo Git orchestration built for Claude Code — AI commits, diffs, and terminal integration",
-  "version": "0.70.2",
+  "version": "0.73.1",
   "publisher": "andrevops-com",
   "license": "MIT",
   "icon": "resources/icons/icon.png",
@@ -249,6 +249,12 @@
         "title": "Open Claude Code",
         "category": "Diffchestrator",
         "icon": "$(terminal)"
+      },
+      {
+        "command": "diffchestrator.openClaudeCodeNew",
+        "title": "Open Claude Code (New Session)",
+        "category": "Diffchestrator",
+        "icon": "$(add)"
       },
       {
         "command": "diffchestrator.yolo",
@@ -824,6 +830,11 @@
         "mac": "alt+d l"
       },
       {
+        "command": "diffchestrator.openClaudeCodeNew",
+        "key": "alt+d alt+l",
+        "mac": "alt+d alt+l"
+      },
+      {
         "command": "diffchestrator.yolo",
         "key": "alt+d y",
         "mac": "alt+d y"
@@ -1030,11 +1041,6 @@
           "default": false,
           "description": "Show only repos with changes by default"
         },
-        "diffchestrator.syncWorkspace": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically sync the VS Code Explorer workspace folders to the currently selected repository"
-        },
         "diffchestrator.autoRefreshInterval": {
           "type": "number",
           "default": 10,
@@ -1111,6 +1117,7 @@
             "enum": [
               "shell",
               "claude",
+              "claudenew",
               "yolo",
               "yolonew"
             ]

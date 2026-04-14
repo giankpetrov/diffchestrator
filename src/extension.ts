@@ -3,7 +3,7 @@ import { RepoManager } from "./services/repoManager";
 import { RepoTreeProvider } from "./providers/repoTreeProvider";
 import { ChangedFilesProvider } from "./providers/changedFilesProvider";
 import { escapeForTerminal } from "./utils/shell";
-import { CMD, CONFIG, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_CHANGED_FILES } from "./constants";
+import { CMD, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_CHANGED_FILES } from "./constants";
 import { registerScanCommands } from "./commands/scan";
 import { registerStageCommands, openNextPendingFile, openFileDiff } from "./commands/stage";
 import { registerCommitCommands } from "./commands/commit";
@@ -73,6 +73,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
   // Shared output channel for logging
   const outputChannel = vscode.window.createOutputChannel("Diffchestrator");
   context.subscriptions.push(outputChannel);
+  repoManager.setLogger((msg) => outputChannel.appendLine(msg));
 
   // Track last open file per repo so switching back restores context (LRU, max 20)
   const MAX_LAST_OPEN = 20;
@@ -259,10 +260,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
   };
 
   repoManager.onDidChangeRepos(updateViewInfo);
-  repoManager.onDidChangeSelection(() => {
-    updateViewInfo();
-    syncWorkspaceWithSelection();
-  });
+  repoManager.onDidChangeSelection(updateViewInfo);
 
   // Notifications when Claude/external tools commit or modify files
   // Queue notifications when unfocused, show grouped summary on refocus
@@ -1343,6 +1341,8 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
               await vscode.commands.executeCommand(CMD.yolonew, { path: repoPath });
             } else if (kind === "claude") {
               await vscode.commands.executeCommand(CMD.openClaudeCode, { path: repoPath });
+            } else if (kind === "claudenew") {
+              await vscode.commands.executeCommand(CMD.openClaudeCodeNew, { path: repoPath });
             }
           }
         } finally {
