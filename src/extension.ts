@@ -168,17 +168,18 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
 
   // Track whether diffchestrator sidebar is actively visible (not just existing)
   let sidebarVisible = false;
-  changedFilesView.onDidChangeVisibility((e) => { sidebarVisible = e.visible; });
-  activeReposView.onDidChangeVisibility((e) => { if (e.visible) sidebarVisible = true; });
-  repoTreeView.onDidChangeVisibility((e) => { if (e.visible) sidebarVisible = true; });
-  repoExplorerView.onDidChangeVisibility((e) => { if (e.visible) sidebarVisible = true; });
 
   context.subscriptions.push(
+    changedFilesView.onDidChangeVisibility((e) => { sidebarVisible = e.visible; }),
+    activeReposView.onDidChangeVisibility((e) => { if (e.visible) sidebarVisible = true; }),
+    repoTreeView.onDidChangeVisibility((e) => { if (e.visible) sidebarVisible = true; }),
+    repoExplorerView.onDidChangeVisibility((e) => { if (e.visible) sidebarVisible = true; }),
     vscode.workspace.registerTextDocumentContentProvider("git-show", gitContentProvider),
     gitContentProvider,
     activeReposView,
     repoTreeView,
     changedFilesView,
+    repoExplorerView
   );
 
   // Refresh git content provider when repos change (invalidates stale diffs)
