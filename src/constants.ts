@@ -112,3 +112,7 @@ export const CTX = {
   changedOnly: "diffchestrator.changedOnly",
   showFavorites: "diffchestrator.showFavorites",
 } as const;
+
+/** Concurrency batch sizes for parallel git operations */
+export const BATCH_SMALL = 5;
+export const BATCH_LARGE = 10;

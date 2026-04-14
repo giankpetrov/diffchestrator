@@ -12,5 +12,6 @@ resources/icons/icon.svg
 scripts/**
 pnpm-lock.yaml
 .jules/**
+dist/**/*.map
 test/**
 __tests__/**

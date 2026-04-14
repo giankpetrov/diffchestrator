@@ -3,7 +3,7 @@ import { RepoManager } from "./services/repoManager";
 import { RepoTreeProvider } from "./providers/repoTreeProvider";
 import { ChangedFilesProvider } from "./providers/changedFilesProvider";
 import { escapeForTerminal } from "./utils/shell";
-import { CMD, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_CHANGED_FILES } from "./constants";
+import { CMD, VIEW_ACTIVE_REPOS, VIEW_REPOS, VIEW_CHANGED_FILES, BATCH_SMALL } from "./constants";
 import { registerScanCommands } from "./commands/scan";
 import { registerStageCommands, openNextPendingFile, openFileDiff } from "./commands/stage";
 import { registerCommitCommands } from "./commands/commit";
@@ -42,12 +42,13 @@ export interface DiffchestratorApi {
   onDidChangeSelection: vscode.Event<void>;
 }
 
-export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
-  // Check git is installed
-  const { execFileSync } = require("child_process");
-  try {
-    execFileSync("git", ["--version"]);
-  } catch {
+export async function activate(context: vscode.ExtensionContext): Promise<DiffchestratorApi> {
+  // Check git is installed (async to avoid blocking extension host)
+  const { execFile } = require("child_process");
+  const gitInstalled = await new Promise<boolean>((resolve) => {
+    execFile("git", ["--version"], (err: Error | null) => resolve(!err));
+  });
+  if (!gitInstalled) {
     vscode.window.showErrorMessage(
       "Diffchestrator: Git is not installed or not on PATH. The extension requires git to function.",
       "Install Git"
@@ -432,16 +433,15 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
         vscode.window.showWarningMessage("Diffchestrator: No repos to fetch.");
         return;
       }
-      const BATCH = 5;
       let fetched = 0;
       let skipped = 0;
       let failed = 0;
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: "Diffchestrator: Fetching all repos", cancellable: false },
         async (progress) => {
-          for (let i = 0; i < repos.length; i += BATCH) {
-            progress.report({ message: `${Math.min(i + BATCH, repos.length)}/${repos.length}` });
-            await Promise.all(repos.slice(i, i + BATCH).map(async (r) => {
+          for (let i = 0; i < repos.length; i += BATCH_SMALL) {
+            progress.report({ message: `${Math.min(i + BATCH_SMALL, repos.length)}/${repos.length}` });
+            await Promise.all(repos.slice(i, i + BATCH_SMALL).map(async (r) => {
               try {
                 await sharedGit.fetch(r.path);
                 await repoManager.refreshRepo(r.path);
@@ -658,12 +658,11 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       }
       type LogEntry = { label: string; description: string; detail: string };
       const entries: LogEntry[] = [];
-      const BATCH = 5;
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Window, title: "Diffchestrator: Loading activity" },
         async () => {
-          for (let i = 0; i < repos.length; i += BATCH) {
-            await Promise.all(repos.slice(i, i + BATCH).map(async (r) => {
+          for (let i = 0; i < repos.length; i += BATCH_SMALL) {
+            await Promise.all(repos.slice(i, i + BATCH_SMALL).map(async (r) => {
               try {
                 const commits = await sharedGit.log(r.path, 3);
                 for (const c of commits) {
@@ -697,19 +696,21 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: "Diffchestrator: Finding merged branches" },
         async () => {
-          for (const r of repos) {
-            try {
-              const merged = await sharedGit.mergedBranches(r.path, r.branch);
-              for (const b of merged) {
-                items.push({
-                  label: `$(git-branch) ${b}`,
-                  description: r.name,
-                  picked: true,
-                  _repo: r.path,
-                  _branch: b,
-                });
-              }
-            } catch { /* skip */ }
+          for (let i = 0; i < repos.length; i += BATCH_SMALL) {
+            await Promise.all(repos.slice(i, i + BATCH_SMALL).map(async (r) => {
+              try {
+                const merged = await sharedGit.mergedBranches(r.path, r.branch);
+                for (const b of merged) {
+                  items.push({
+                    label: `$(git-branch) ${b}`,
+                    description: r.name,
+                    picked: true,
+                    _repo: r.path,
+                    _branch: b,
+                  });
+                }
+              } catch { /* skip */ }
+            }));
           }
         }
       );

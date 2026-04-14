@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { RepoManager } from "../services/repoManager";
 import type { CommitEntry, DashboardMessage } from "../types";
-import { CMD } from "../constants";
+import { CMD, BATCH_LARGE } from "../constants";
 import { showTerminalIfExists, terminalIcon } from "../commands/terminal";
 
 interface DiffStatSummary {
@@ -248,21 +248,20 @@ export class DashboardWebviewPanel {
     });
 
     // Phase 2: batched git calls
-    const BATCH = 10;
     const heatmapEntries: HeatmapEntry[] = [];
     const sessionEntries: SessionSummaryEntry[] = [];
     const activityEntries: ActivityEntry[] = [];
     const stashEntries: StashOverviewEntry[] = [];
     const diffStats = new Map<string, DiffStatSummary>();
 
-    for (let i = 0; i < repos.length; i += BATCH) {
-      const batch = repos.slice(i, i + BATCH);
+    for (let i = 0; i < repos.length; i += BATCH_LARGE) {
+      const batch = repos.slice(i, i + BATCH_LARGE);
       await Promise.all(
         batch.map(async (r) => {
           try {
-            // Single git log call replaces logSinceWithDate + log(3)
+            // logSinceWithDate: uses --since + cached lastCommitDate
             const calls: Promise<unknown>[] = [
-              this._git.log(r.path, 50),
+              this._git.logSinceWithDate(r.path, sinceISO),
             ];
             if (r.totalChanges > 0) {
               calls.push(this._git.diffStatSummary(r.path));
@@ -271,7 +270,7 @@ export class DashboardWebviewPanel {
               calls.push(this._git.stashList(r.path));
             }
             const results = await Promise.all(calls);
-            const allCommits = results[0] as CommitEntry[];
+            const logResult = results[0] as { lastDate: string | undefined; commits: CommitEntry[] };
             let resultIdx = 1;
             if (r.totalChanges > 0) {
               diffStats.set(r.path, results[resultIdx++] as DiffStatSummary);
@@ -283,12 +282,10 @@ export class DashboardWebviewPanel {
               }
             }
 
-            // Derive all dashboard data from single log result
-            const lastDate = allCommits.length > 0 ? allCommits[0].date : undefined;
-            const sessionCommits = allCommits.filter(
-              (c) => new Date(c.date).getTime() >= new Date(sinceISO).getTime()
-            );
-            const recentCommits = allCommits.slice(0, 3);
+            // Derive all dashboard data from logSinceWithDate result
+            const lastDate = logResult.lastDate;
+            const sessionCommits = logResult.commits;
+            const recentCommits = sessionCommits.slice(0, 3);
 
             heatmapEntries.push({
               name: r.name,

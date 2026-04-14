@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import type { RepoManager } from "../services/repoManager";
 import type { RepoSummary } from "../types";
-import { CMD } from "../constants";
+import { CMD, BATCH_SMALL } from "../constants";
 import { timeAgo } from "../utils/time";
 
 interface TreeNode {
@@ -73,10 +73,9 @@ export class RepoTreeProvider implements vscode.TreeDataProvider<TreeNode>, vsco
 
     // Parallel with concurrency limit
     const repos = this.repoManager.repos;
-    const BATCH = 5;
-    for (let i = 0; i < repos.length; i += BATCH) {
+    for (let i = 0; i < repos.length; i += BATCH_SMALL) {
       await Promise.all(
-        repos.slice(i, i + BATCH).map(async (repo) => {
+        repos.slice(i, i + BATCH_SMALL).map(async (repo) => {
           try {
             const commits = await this._git.log(repo.path, 1);
             if (commits.length > 0) {

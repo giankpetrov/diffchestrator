@@ -3,7 +3,7 @@ import * as path from "path";
 import { Scanner } from "../git/scanner";
 import { GitExecutor } from "../git/gitExecutor";
 import type { RepoSummary } from "../types";
-import { CTX } from "../constants";
+import { CTX, BATCH_LARGE } from "../constants";
 
 const STATE_RECENT_REPOS = "diffchestrator.recentRepoPaths";
 const STATE_SELECTED_REPO = "diffchestrator.selectedRepo";
@@ -31,6 +31,7 @@ export class RepoManager implements vscode.Disposable {
   private _windowFocused = true;
   private _focusDisposable: vscode.Disposable | undefined;
   private _log: ((msg: string) => void) | undefined;
+  private _configDisposable: vscode.Disposable | undefined;
 
   private _onDidChangeRepos = new vscode.EventEmitter<void>();
   readonly onDidChangeRepos = this._onDidChangeRepos.event;
@@ -76,6 +77,15 @@ export class RepoManager implements vscode.Disposable {
         vscode.commands.executeCommand("setContext", CTX.hasSelectedRepo, true);
       }
     }
+
+    // Invalidate tag cache when repoTags config changes
+    this._configDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("diffchestrator.repoTags")) {
+        this._taggedPathsCache = undefined;
+        this._activeRepoPathsCache = undefined;
+        this._onDidChangeRepos.fire();
+      }
+    });
   }
 
   private _taggedPathsCache: Set<string> | undefined;
@@ -286,14 +296,13 @@ export class RepoManager implements vscode.Disposable {
     this._onDidChangeRepos.fire();
 
     // Phase 2: Fetch git metadata in background, update tree as batches complete
-    const BATCH = 10;
     const fetchOnScan = config.get<boolean>("fetchOnScan", false);
     await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Window, title: `Diffchestrator: Scanning repos${fetchOnScan ? " + fetching" : ""}` },
       async (progress) => {
-        for (let i = 0; i < repos.length; i += BATCH) {
-          progress.report({ message: `${Math.min(i + BATCH, repos.length)}/${repos.length}` });
-          await Promise.all(repos.slice(i, i + BATCH).map(async (r) => {
+        for (let i = 0; i < repos.length; i += BATCH_LARGE) {
+          progress.report({ message: `${Math.min(i + BATCH_LARGE, repos.length)}/${repos.length}` });
+          await Promise.all(repos.slice(i, i + BATCH_LARGE).map(async (r) => {
             await scanner.fetchMetadata(r);
             if (fetchOnScan) {
               try { await this._git.fetch(r.path); } catch { /* ignore fetch failures */ }
@@ -419,13 +428,12 @@ export class RepoManager implements vscode.Disposable {
   async refreshAll(): Promise<void> {
     const repos = [...this._repos.keys()];
     if (repos.length === 0) return;
-    const BATCH = 10;
     await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Window, title: "Diffchestrator: Refreshing" },
       async (progress) => {
-        for (let i = 0; i < repos.length; i += BATCH) {
-          progress.report({ message: `${Math.min(i + BATCH, repos.length)}/${repos.length}` });
-          await Promise.all(repos.slice(i, i + BATCH).map((p) => this.refreshRepo(p)));
+        for (let i = 0; i < repos.length; i += BATCH_LARGE) {
+          progress.report({ message: `${Math.min(i + BATCH_LARGE, repos.length)}/${repos.length}` });
+          await Promise.all(repos.slice(i, i + BATCH_LARGE).map((p) => this.refreshRepo(p)));
         }
       }
     );
@@ -582,6 +590,7 @@ export class RepoManager implements vscode.Disposable {
   dispose(): void {
     if (this._refreshTimer) clearInterval(this._refreshTimer);
     this._focusDisposable?.dispose();
+    this._configDisposable?.dispose();
     for (const timer of this._changesDebounce.values()) clearTimeout(timer);
     this._changesDebounce.clear();
     this._onDidChangeRepos.dispose();

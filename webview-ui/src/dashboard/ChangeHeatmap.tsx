@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { HeatmapEntry } from "./DashboardApp";
 
 interface Props {
@@ -24,12 +25,13 @@ function heatLevel(e: HeatmapEntry): HeatLevel {
 }
 
 export default function ChangeHeatmap({ entries, onOpenRepo, collapsed, onToggle }: Props) {
-  const sorted = [...entries].sort((a, b) => score(b) - score(a));
+  const sorted = useMemo(() => [...entries].sort((a, b) => score(b) - score(a)), [entries]);
 
-  const activeCount = entries.filter((e) => e.totalChanges > 0).length;
-  const staleCount = entries.filter(
-    (e) => e.daysSinceLastCommit !== undefined && e.daysSinceLastCommit > 30
-  ).length;
+  const activeCount = useMemo(() => entries.filter((e) => e.totalChanges > 0).length, [entries]);
+  const staleCount = useMemo(
+    () => entries.filter((e) => e.daysSinceLastCommit !== undefined && e.daysSinceLastCommit > 30).length,
+    [entries]
+  );
 
   return (
     <div className="dashboard-section">

@@ -4,12 +4,28 @@ import type { RepoManager } from "./repoManager";
 import { CMD, CONFIG } from "../constants";
 import { timeAgoShort } from "../utils/time";
 
+interface BlameResult {
+  hash: string;
+  author: string;
+  date: string;
+  summary: string;
+}
+
+interface BlameCacheEntry {
+  blame: BlameResult | null;
+  time: number;
+}
+
 export class InlineBlameService implements vscode.Disposable {
   private _git;
   private _disposables: vscode.Disposable[] = [];
   private _decorationType: vscode.TextEditorDecorationType;
   private _debounceTimer: ReturnType<typeof setTimeout> | undefined;
   private _enabled: boolean;
+  /** LRU blame cache: "repoPath:relativePath:line" → result */
+  private _blameCache = new Map<string, BlameCacheEntry>();
+  private static readonly BLAME_CACHE_TTL = 30_000; // 30s
+  private static readonly BLAME_CACHE_MAX = 200;
 
   constructor(private _repoManager: RepoManager) {
     this._git = _repoManager.git;
@@ -122,8 +138,28 @@ export class InlineBlameService implements vscode.Disposable {
     const relativePath = path.relative(repoPath, filePath);
 
     try {
+      const cacheKey = `${repoPath}:${relativePath}:${line}`;
+      const cached = this._blameCache.get(cacheKey);
+      if (cached && Date.now() - cached.time < InlineBlameService.BLAME_CACHE_TTL) {
+        if (!cached.blame) {
+          editor.setDecorations(this._decorationType, []);
+          return;
+        }
+        const decoration: vscode.DecorationOptions = {
+          range: new vscode.Range(line - 1, 0, line - 1, 0),
+          renderOptions: {
+            after: {
+              contentText: `  ${cached.blame.author}, ${timeAgoShort(cached.blame.date)} — ${cached.blame.summary}`,
+            },
+          },
+        };
+        editor.setDecorations(this._decorationType, [decoration]);
+        return;
+      }
+
       const blame = await this._git.blame(repoPath, relativePath, line);
       if (!blame || blame.hash.startsWith("0000000")) {
+        this._setCacheEntry(cacheKey, null);
         editor.setDecorations(this._decorationType, []);
         return;
       }
@@ -137,10 +173,20 @@ export class InlineBlameService implements vscode.Disposable {
         },
       };
 
+      this._setCacheEntry(cacheKey, blame);
       editor.setDecorations(this._decorationType, [decoration]);
     } catch {
       editor.setDecorations(this._decorationType, []);
     }
+  }
+
+  private _setCacheEntry(key: string, blame: BlameResult | null): void {
+    // Evict oldest entries when cache is full
+    if (this._blameCache.size >= InlineBlameService.BLAME_CACHE_MAX) {
+      const first = this._blameCache.keys().next().value;
+      if (first !== undefined) this._blameCache.delete(first);
+    }
+    this._blameCache.set(key, { blame, time: Date.now() });
   }
 
   dispose(): void {

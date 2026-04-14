@@ -9,8 +9,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "Node16",
-    "declaration": true
+    "moduleResolution": "Node16"
   },
   "exclude": ["node_modules", "dist", "webview-ui", "benchmark.ts"]
 }

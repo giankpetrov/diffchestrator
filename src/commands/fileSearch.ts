@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import type { RepoManager } from "../services/repoManager";
-import { CMD } from "../constants";
+import { CMD, BATCH_SMALL, BATCH_LARGE } from "../constants";
 import { resolveRepoPath } from "../utils/fileItem";
 
 export function registerFileSearchCommand(
@@ -39,10 +39,9 @@ export function registerFileSearchCommand(
           quickPick.busy = true;
           const items: vscode.QuickPickItem[] = [];
 
-          // Search across all repos concurrently (max 10 at a time)
-          const BATCH = 10;
-          for (let i = 0; i < repos.length; i += BATCH) {
-            const batch = repos.slice(i, i + BATCH);
+          // Search across all repos concurrently (max BATCH_LARGE at a time)
+          for (let i = 0; i < repos.length; i += BATCH_LARGE) {
+            const batch = repos.slice(i, i + BATCH_LARGE);
             const results = await Promise.all(
               batch.map(async (repo) => {
                 try {
@@ -158,9 +157,8 @@ export function registerFileSearchCommand(
         try {
           // Grep all repos in parallel (batched to 5)
           const allMatches: (vscode.QuickPickItem & { _fullPath?: string; _line?: number; _repoPath?: string; _noAction?: boolean })[] = [];
-          const BATCH = 5;
-          for (let i = 0; i < repoPaths.length; i += BATCH) {
-            const batch = repoPaths.slice(i, i + BATCH);
+          for (let i = 0; i < repoPaths.length; i += BATCH_SMALL) {
+            const batch = repoPaths.slice(i, i + BATCH_SMALL);
             const results = await Promise.all(
               batch.map(async (rp) => {
                 try {
