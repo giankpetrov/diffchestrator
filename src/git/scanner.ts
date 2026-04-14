@@ -24,14 +24,12 @@ const SKIP_DIRS = new Set([
 export class Scanner extends EventEmitter {
   private maxDepth: number;
   private extraSkipDirs: Set<string>;
-  private _log: ((msg: string) => void) | undefined;
   dirsScanned = 0;
 
-  constructor(private git: GitExecutor, maxDepth: number, extraSkipDirs: string[] = [], log?: (msg: string) => void) {
+  constructor(private git: GitExecutor, maxDepth: number, extraSkipDirs: string[] = []) {
     super();
     this.maxDepth = maxDepth;
     this.extraSkipDirs = new Set([...SKIP_DIRS, ...extraSkipDirs]);
-    this._log = log;
   }
 
   /**
@@ -44,7 +42,6 @@ export class Scanner extends EventEmitter {
     const queue: Array<{ path: string; depth: number }> = [
       { path: rootPath, depth: 0 },
     ];
-    this._log?.(`[scan] start BFS root=${rootPath} maxDepth=${this.maxDepth}`);
 
     while (queue.length > 0) {
       const { path: dirPath, depth } = queue.shift()!;
@@ -52,10 +49,7 @@ export class Scanner extends EventEmitter {
 
       const gitDir = path.join(dirPath, ".git");
       try {
-        if (fs.existsSync(gitDir)) {
-          // .git directory (normal repo) or .git file (worktree/submodule gitdir pointer).
-          // Don't require isDirectory() — 9p/drvfs mounts may report wrong type.
-          this._log?.(`[scan] FOUND repo depth=${depth} ${dirPath}`);
+        if (fs.existsSync(gitDir) && fs.statSync(gitDir).isDirectory()) {
           repos.push({
             path: dirPath,
             name: path.basename(dirPath),
@@ -71,43 +65,27 @@ export class Scanner extends EventEmitter {
           });
           continue;
         }
-        this._log?.(`[scan] no .git depth=${depth} ${dirPath}`);
-      } catch (err) {
-        this._log?.(`[scan] .git check error depth=${depth} ${dirPath}: ${err instanceof Error ? err.message : err}`);
+      } catch {
+        /* stat failure — skip */
       }
 
-      if (depth >= this.maxDepth) {
-        this._log?.(`[scan] maxDepth reached depth=${depth} ${dirPath}`);
-        continue;
-      }
+      if (depth >= this.maxDepth) continue;
 
       try {
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
         for (const entry of entries) {
-          let isDir = entry.isDirectory();
-          // 9p/drvfs mounts may report DT_UNKNOWN — fall back to statSync
-          if (!isDir && !entry.isFile() && !entry.isSymbolicLink()) {
-            try {
-              isDir = fs.statSync(path.join(dirPath, entry.name)).isDirectory();
-              if (isDir) this._log?.(`[scan] stat fallback: "${entry.name}" is dir (Dirent was unknown) in ${dirPath}`);
-            } catch { /* stat failed — treat as non-dir */ }
-          }
-          const skipped = this.extraSkipDirs.has(entry.name);
-          if (isDir && !skipped) {
+          if (entry.isDirectory() && !this.extraSkipDirs.has(entry.name)) {
             queue.push({
               path: path.join(dirPath, entry.name),
               depth: depth + 1,
             });
-          } else {
-            this._log?.(`[scan] skip entry="${entry.name}" isDir=${isDir} skipped=${skipped} in ${dirPath}`);
           }
         }
-      } catch (err) {
-        this._log?.(`[scan] readdir error depth=${depth} ${dirPath}: ${err instanceof Error ? err.message : err}`);
+      } catch {
+        /* permission denied etc */
       }
     }
 
-    this._log?.(`[scan] done: ${repos.length} repos found, ${this.dirsScanned} dirs scanned`);
     return repos;
   }
 

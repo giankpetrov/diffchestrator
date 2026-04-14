@@ -74,7 +74,6 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
   // Shared output channel for logging
   const outputChannel = vscode.window.createOutputChannel("Diffchestrator");
   context.subscriptions.push(outputChannel);
-  repoManager.setLogger((msg) => outputChannel.appendLine(msg));
 
   // Track last open file per repo so switching back restores context (LRU, max 20)
   const MAX_LAST_OPEN = 20;
@@ -165,6 +164,7 @@ export function activate(context: vscode.ExtensionContext): DiffchestratorApi {
   const repoTreeView = vscode.window.createTreeView(VIEW_REPOS, { treeDataProvider: repoTree });
   const changedFilesView = vscode.window.createTreeView(VIEW_CHANGED_FILES, { treeDataProvider: changedFiles });
   const repoExplorerView = vscode.window.createTreeView(VIEW_REPO_EXPLORER, { treeDataProvider: repoExplorer });
+  context.subscriptions.push(repoExplorerView);
 
   // Track whether diffchestrator sidebar is actively visible (not just existing)
   let sidebarVisible = false;
