@@ -259,9 +259,9 @@ export class DashboardWebviewPanel {
       await Promise.all(
         batch.map(async (r) => {
           try {
-            // logSinceWithDate: uses --since + cached lastCommitDate
+            // Single git log call — reduced from 50 to 15
             const calls: Promise<unknown>[] = [
-              this._git.logSinceWithDate(r.path, sinceISO),
+              this._git.log(r.path, 15),
             ];
             if (r.totalChanges > 0) {
               calls.push(this._git.diffStatSummary(r.path));
@@ -270,7 +270,7 @@ export class DashboardWebviewPanel {
               calls.push(this._git.stashList(r.path));
             }
             const results = await Promise.all(calls);
-            const logResult = results[0] as { lastDate: string | undefined; commits: CommitEntry[] };
+            const allCommits = results[0] as CommitEntry[];
             let resultIdx = 1;
             if (r.totalChanges > 0) {
               diffStats.set(r.path, results[resultIdx++] as DiffStatSummary);
@@ -282,10 +282,12 @@ export class DashboardWebviewPanel {
               }
             }
 
-            // Derive all dashboard data from logSinceWithDate result
-            const lastDate = logResult.lastDate;
-            const sessionCommits = logResult.commits;
-            const recentCommits = sessionCommits.slice(0, 3);
+            // Derive all dashboard data from single log result
+            const lastDate = allCommits.length > 0 ? allCommits[0].date : undefined;
+            const sessionCommits = allCommits.filter(
+              (c) => new Date(c.date).getTime() >= new Date(sinceISO).getTime()
+            );
+            const recentCommits = allCommits.slice(0, 3);
 
             heatmapEntries.push({
               name: r.name,
