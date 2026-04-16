@@ -44,9 +44,16 @@ async function commandExists(cmd: string): Promise<boolean> {
  */
 async function aliasOrCommandExists(name: string): Promise<boolean> {
   try {
+    // Basic validation to prevent command injection before shell-specific escaping
+    if (!name || /[\s;&|><$`\\]/.test(name)) {
+      return false;
+    }
+
     // Use the user's default shell so aliases from .zshrc/.bashrc are loaded
     const shell = vscode.env.shell || process.env.SHELL || "/bin/bash";
-    await execFileAsync(shell, ["-ic", `type ${name}`], { timeout: 5000 });
+    // Wrap in single quotes to safely handle any other characters
+    const safeName = `'${name.replace(/'/g, "'\\''")}'`;
+    await execFileAsync(shell, ["-ic", `type ${safeName}`], { timeout: 5000 });
     return true;
   } catch {
     return false;
